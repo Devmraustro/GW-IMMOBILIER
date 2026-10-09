@@ -7,7 +7,6 @@ import {
   Car,
   CalendarClock,
   Inbox,
-  Info,
   ListChecks,
   MessageCircle,
   Wallet,
@@ -268,15 +267,6 @@ export default function AdminOverviewPage() {
             </section>
           </div>
 
-          <section className="rounded-2xl border border-dashed border-info/40 bg-info-soft p-6">
-            <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-ink-900">
-              <Info className="size-4 text-info" aria-hidden />
-              {t.admin.futureAuthTitle}
-            </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-ink-600">
-              {t.admin.futureAuthText}
-            </p>
-          </section>
       </>
     </div>
   );
