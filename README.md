@@ -199,6 +199,10 @@ renders a broken-image icon and never breaks the layout, even fully offline.
   always match (no hydration error).
 - Prices use the Algerian dinar written `DA` (the local convention) with Latin
   digits; dates, numbers and relative times use the active locale.
+- Enumerated values stored on the data (`type`, `category`, `priceUnit`) are
+  never rendered raw: `lib/labels.ts` maps every one of them through the active
+  dictionary. A unit test fails if a new enum value is added without a
+  translation.
 
 ---
 
@@ -254,14 +258,37 @@ Be explicit about these when presenting the prototype:
    empty rather than fabricated.
 7. **Placeholder contact details** until configured (see below); the UI shows a
    clearly labelled warning while they are placeholders.
-8. **The first paint is always French.** Pages are statically prerendered, and
-   the saved language lives in `localStorage`, which the browser cannot send
-   before the page arrives. A returning Arabic visitor therefore sees one frame
-   of French before the interface flips to RTL Arabic. Removing that frame
-   requires persisting the choice in a cookie and opting the routes into
-   dynamic rendering (`export const dynamic = 'force-dynamic'` or the Next.js
-   `cookies()` API) — deliberately left out here to keep the whole site static
-   and fast.
+8. **The first paint is always French (measured).** Pages are statically
+   prerendered, so the HTML leaves the server as
+   `<html lang="fr" dir="ltr">`; the saved language lives in `localStorage`,
+   which the browser cannot send before the page arrives. Measured on the
+   production build over three cold loads (Chromium, local machine):
+
+   | Event | Time after navigation |
+   | --- | --- |
+   | First contentful paint (French, LTR) | 108–120 ms |
+   | `<html dir>` becomes `rtl`, Arabic content shown | ~450–481 ms |
+   | **French/LTR visible for** | **≈ 0.35 s** |
+
+   The delay is hydration, not network: it scales with device CPU and bundle
+   size, so a mid-range phone will show noticeably longer.
+
+   Removing it entirely means the server has to know the language before it
+   renders, which conflicts with keeping every route static. The two options,
+   neither of which is implemented here:
+
+   - **Dynamic rendering** — read a `gwi.locale` cookie in the root layout and
+     opt the routes out of static generation. Simple, but every request becomes
+     a server render.
+   - **Prerender both languages + an edge middleware rewrite** — build `/` and
+     `/ar/…` statically, then rewrite `/` → `/ar/` transparently when the
+     cookie says Arabic. Keeps static rendering, at the cost of a locale
+     segment in the route tree.
+
+   A partial fix (an inline script that sets `dir` before paint) was rejected:
+   it eliminates the LTR→RTL *jump* but leaves the same window in which French
+   text is laid out right-to-left, which looks worse than the current
+   behaviour.
 
 ---
 
@@ -363,7 +390,7 @@ There are **no secrets** in this project and **no key is ever required**.
 ```bash
 npm run typecheck   # tsc --noEmit — 0 errors
 npm run lint        # ESLint — 0 warnings
-npm test            # Vitest — 95 tests, 7 files
+npm test            # Vitest — 102 tests, 8 files
 npm run build       # production build, 48 static pages
 ```
 
@@ -378,6 +405,7 @@ Covered by tests:
 | `tests/whatsapp.test.ts` | Message content in both languages, dates, customer details, `wa.me` URL encoding |
 | `tests/data.test.ts` | Integrity of the whole seed dataset |
 | `tests/i18n.test.ts` | FR/AR key parity, no empty strings, placeholder parity, slug helpers, geo helpers |
+| `tests/labels.test.ts` | Every property type, vehicle category and price unit resolves to a **translated** label in both languages, and no raw machine value is ever rendered |
 
 ### What was actually verified, and how
 
@@ -385,17 +413,32 @@ Covered by tests:
 | --- | --- | --- |
 | Typecheck | `tsc --noEmit` (strict) | 0 errors |
 | Lint | `next lint` | 0 warnings |
-| Unit tests | `vitest run` | 95 passed / 95 |
+| Unit tests | `vitest run` | 102 passed / 102 |
 | Production build | `next build` | 48/48 pages prerendered |
-| Every route responds | `curl` against `next dev` | 16 routes 200, unknown route 404 |
-| SEO surface | `curl` + HTML inspection | titles, descriptions, `sitemap.xml`, `robots.txt`, listing data present in the SSR HTML |
-| Dead interactive elements | source audit | every button/link has a handler or href |
+| Route availability | `curl` | 16 routes 200, unknown route 404, `sitemap.xml` + `robots.txt` 200 |
+| SEO surface | HTML inspection | titles, descriptions, listing data present in the SSR HTML |
+| **Responsive layout, 375 / 768 / 1440 px** | **Headless Chromium 153, 13 routes × 3 viewports** | **No horizontal overflow anywhere; 0 console errors; 0 hydration warnings** |
+| **Unusable / dead controls** | **Hit-testing every visible control at its centre point** | **3 367 controls tested, 0 blocked** |
+| **Arabic RTL** | **Headless Chromium, 8 routes × 2 viewports** | **`dir="rtl"` + `lang="ar"` everywhere; no overflow; no clipped text; language persists across navigation and reload** |
+| **Translation coverage** | Text-diff of every visible string FR vs AR | All interface text translated; only sample customer names/messages remain French (they are demo *content*) |
+| **Map** | Headless Chromium | Clustering, marker↔listing binding, filter sync, geolocation grant/deny, mobile list/map toggle, attribution, directions coordinates — all pass. **Tile images could not load (see below)** |
+| **End-to-end flow** | Headless Chromium, scripted | Filters → detail → validated inquiry → WhatsApp message → dashboard → status change → add listing (visible on the public catalogue) → reservation conflict → cancel → re-book freed dates. **0 console errors** |
 
-Not covered by automated checks, and therefore worth a manual pass before you
-present it: pixel-level layout at 375 / 768 / 1440 px, the Arabic RTL layout in
-a real browser, the browser console, and the Leaflet map tiles (the sandbox has
-no browser and no outbound access to the tile server, so the map was verified by
-code review and by the SSR shell only).
+Two deliberate notes on the environment used for the browser pass:
+
+- **Map tiles never loaded.** The audit sandbox has no outbound access to
+  `tile.openstreetmap.org` (32 tile requests, all failed). Every other map
+  behaviour was verified without tiles, and the app shows its own
+  "tiles unavailable" notice. Tile rendering must be confirmed once on a
+  normal network.
+- **Photography fell back to the local SVGs.** `images.unsplash.com` is equally
+  unreachable, so every displayed image rendered `public/images/fallback/*.svg`
+  — which is exactly the designed fallback path and proves it works
+  (15/15 images on the home page rendered at their correct intrinsic sizes).
+
+Known minor deviations, accepted rather than changed: breadcrumb and footer
+text links are 16 px tall (below the 24 px WCAG 2.5.8 target, but wide and
+plainly legible); all buttons, inputs and selects are ≥ 44 px.
 
 ---
 
@@ -483,11 +526,13 @@ components/
   cars/                  # Cards, catalogue, detail
   map/                   # Leaflet map, clustering, lazy loader, explorer
   dashboard/             # Shell, stat cards, property/vehicle/inquiry/reservation managers
-  shared/                # SmartImage, Reveal, empty state, WhatsApp, directions, inquiry form
+  shared/                # SmartImage, Reveal, empty state, WhatsApp, directions, inquiry form,
+                         # catalog header (translated page headings)
   pages/                 # Page-level client compositions
 data/                    # Seed data (properties, vehicles, areas, services, inquiries, reservations, company)
 lib/
   i18n/                  # Provider + FR/AR dictionaries
+  labels.ts             # Enum -> translated label (property type, category, price unit)
   filters.ts  validation.ts  availability.ts  whatsapp.ts  geo.ts
   format.ts  slug.ts  images.ts  config.ts  utils.ts  demo-store.tsx
 public/images/fallback/  # Local SVG artwork used when remote photos fail

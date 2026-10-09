@@ -9,9 +9,10 @@ import L from 'leaflet';
 import 'leaflet.markercluster';
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import type { GeoPoint, Property } from '@/types';
-import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, OSM_ATTRIBUTION, OSM_TILE_URL } from '@/lib/config';
+import { DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM, OSM_COPYRIGHT_URL, OSM_TILE_URL } from '@/lib/config';
 import { AREA_BOUNDS } from '@/data/areas';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n';
 
 export interface PropertyMapHandle {
   map: L.Map | null;
@@ -221,6 +222,10 @@ export function PropertyMap({
   resizeKey,
   onMapClick,
 }: PropertyMapProps) {
+  const { t } = useI18n();
+  // Required by the OpenStreetMap tile usage policy — the credit link must stay
+  // intact, only the surrounding word is translated.
+  const attribution = `&copy; <a href="${OSM_COPYRIGHT_URL}">OpenStreetMap</a> ${t.common.mapContributors}`;
   return (
     <MapContainer
       center={center ? [center.lat, center.lng] : [DEFAULT_MAP_CENTER.lat, DEFAULT_MAP_CENTER.lng]}
@@ -230,7 +235,7 @@ export function PropertyMap({
       // Attribution is required by the OpenStreetMap tile usage policy.
       attributionControl
     >
-      <TileLayer url={OSM_TILE_URL} attribution={OSM_ATTRIBUTION} maxZoom={19} />
+      <TileLayer url={OSM_TILE_URL} attribution={attribution} maxZoom={19} />
       <MapBridge mapRef={mapRef} />
       <ResizeObserverBridge resizeKey={resizeKey} />
       <TileHealthBridge onTilesError={onTilesError} />

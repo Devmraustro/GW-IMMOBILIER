@@ -10,6 +10,7 @@ import type {
   RentalPeriod,
 } from '@/types';
 import { useI18n } from '@/lib/i18n';
+import { propertyTypeLabel } from '@/lib/labels';
 import { AREAS } from '@/data/areas';
 import { PROPERTY_TYPES, RENTAL_PERIODS, PRICE_BOUNDS } from '@/lib/filters';
 import { formatCurrency } from '@/lib/format';
@@ -150,7 +151,7 @@ export function PropertyFiltersPanel({
           <div className="flex flex-wrap gap-2">
             {PROPERTY_TYPES.map((type) => (
               <Chip key={type} active={filters.types.includes(type)} onClick={() => toggleType(type)}>
-                {type}
+                {propertyTypeLabel(type, t)}
               </Chip>
             ))}
           </div>

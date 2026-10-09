@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CheckCircle2, MessageCircle, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Property, Vehicle } from '@/types';
@@ -31,9 +31,18 @@ export function InquiryForm({ property, vehicle, requireDates, className }: Inqu
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [message, setMessage] = useState(
-    property ? t.inquiry.messagePropertyPlaceholder : t.inquiry.messageVehiclePlaceholder,
-  );
+  const messagePlaceholder = property
+    ? t.inquiry.messagePropertyPlaceholder
+    : t.inquiry.messageVehiclePlaceholder;
+  const [message, setMessage] = useState(messagePlaceholder);
+  // Once the visitor has typed something we must never overwrite it, but a
+  // language switch should still translate the untouched default text.
+  const [messageEdited, setMessageEdited] = useState(false);
+
+  useEffect(() => {
+    if (!messageEdited) setMessage(messagePlaceholder);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locale]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -262,7 +271,10 @@ export function InquiryForm({ property, vehicle, requireDates, className }: Inqu
           <Textarea
             id="inq-message"
             value={message}
-            onChange={(event) => setMessage(event.target.value)}
+            onChange={(event) => {
+              setMessageEdited(true);
+              setMessage(event.target.value);
+            }}
             aria-invalid={Boolean(errors.message)}
             className="mt-1.5"
           />

@@ -28,6 +28,7 @@ import { formatCurrency, formatSurface } from '@/lib/format';
 import { requestCurrentPosition } from '@/lib/geo';
 import { buildPropertyMessage } from '@/lib/whatsapp';
 import { WhatsAppButton } from '@/components/shared/whatsapp-button';
+import { propertyTypeLabel } from '@/lib/labels';
 import { cn, toggleInArray } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -195,7 +196,7 @@ export function MapExplorer() {
                       : 'border-ink-200 bg-white text-ink-600 hover:border-ink-300 hover:text-ink-900',
                   )}
                 >
-                  {type}
+                  {propertyTypeLabel(type, t)}
                 </button>
               ))}
             </div>
@@ -329,7 +330,7 @@ export function MapExplorer() {
                             {pick(property.title)}
                           </p>
                           <Badge variant="ink" className="shrink-0">
-                            {property.type}
+                            {propertyTypeLabel(property.type, t)}
                           </Badge>
                         </div>
                         <p className="mt-0.5 truncate text-xs text-ink-400">{area}</p>
@@ -426,7 +427,7 @@ export function MapExplorer() {
                       <X className="size-3.5" aria-hidden />
                     </button>
                     <div className="absolute inset-x-0 bottom-0 flex items-center gap-1.5 p-2">
-                      <Badge variant="ink">{selected.type}</Badge>
+                      <Badge variant="ink">{propertyTypeLabel(selected.type, t)}</Badge>
                       {selected.isDemo ? <Badge variant="demo">{t.common.demo}</Badge> : null}
                     </div>
                   </div>

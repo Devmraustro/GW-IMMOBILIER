@@ -20,6 +20,7 @@ import type {
   RentalPeriod,
 } from '@/types';
 import { useI18n } from '@/lib/i18n';
+import { propertyTypeLabel, priceUnitLabel } from '@/lib/labels';
 import { useDemoStore } from '@/lib/demo-store';
 import { AREAS } from '@/data/areas';
 import { PROPERTY_TYPES, RENTAL_PERIODS } from '@/lib/filters';
@@ -386,11 +387,11 @@ export function PropertyManager() {
                     <p className="text-[11px] text-ink-400">{formatSurface(property.surface)}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <Badge variant="default">{property.type}</Badge>
+                    <Badge variant="default">{propertyTypeLabel(property.type, t)}</Badge>
                   </td>
                   <td className="px-4 py-3 font-medium tabular-nums">
                     {formatCurrency(property.price)}
-                    <p className="text-[11px] font-normal text-ink-400">{property.priceUnit}</p>
+                    <p className="text-[11px] font-normal text-ink-400">{priceUnitLabel(property.priceUnit, t)}</p>
                   </td>
                   <td className="px-4 py-3">
                     <Select
@@ -531,7 +532,7 @@ export function PropertyManager() {
                   <SelectContent>
                     {PROPERTY_TYPES.map((type) => (
                       <SelectItem key={type} value={type}>
-                        {type}
+                        {propertyTypeLabel(type, t)}
                       </SelectItem>
                     ))}
                   </SelectContent>

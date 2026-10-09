@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
+import { propertyTypeLabel } from '@/lib/labels';
 import { useDemoStore } from '@/lib/demo-store';
 import { buildPropertyMessage, whatsappUrl } from '@/lib/whatsapp';
 import { formatCurrency, formatDate, formatSurface } from '@/lib/format';
@@ -115,7 +116,7 @@ export function PropertyDetail({ slug }: { slug: string }) {
       label: t.properties.furnishedFilter,
       value: property.furnished ? t.common.furnished : t.common.unfurnished,
     },
-    { icon: Building2, label: t.common.type, value: property.type },
+    { icon: Building2, label: t.common.type, value: propertyTypeLabel(property.type, t) },
     {
       icon: KeyRound,
       label: t.common.category,
@@ -160,7 +161,7 @@ export function PropertyDetail({ slug }: { slug: string }) {
         <div className="mt-5 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="ink">{property.type}</Badge>
+              <Badge variant="ink">{propertyTypeLabel(property.type, t)}</Badge>
               <Badge variant={STATUS_VARIANT[property.availability.status]}>
                 {t.properties.availabilityStatus[property.availability.status]}
               </Badge>

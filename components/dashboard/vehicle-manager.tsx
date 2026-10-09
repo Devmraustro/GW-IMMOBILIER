@@ -6,6 +6,7 @@ import { Eye, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { FuelType, Transmission, Vehicle, VehicleCategory } from '@/types';
 import { useI18n } from '@/lib/i18n';
+import { vehicleCategoryLabel } from '@/lib/labels';
 import { useDemoStore } from '@/lib/demo-store';
 import { AREAS } from '@/data/areas';
 import { formatCurrency } from '@/lib/format';
@@ -296,7 +297,7 @@ export function VehicleManager() {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <Badge variant="default">{vehicle.category}</Badge>
+                    <Badge variant="default">{vehicleCategoryLabel(vehicle.category, t)}</Badge>
                   </td>
                   <td className="px-4 py-3 font-medium tabular-nums">
                     {formatCurrency(vehicle.dailyPrice)}

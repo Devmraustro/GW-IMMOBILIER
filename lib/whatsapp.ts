@@ -1,8 +1,9 @@
 import type { Locale, Property, Vehicle } from '@/types';
 import type { Dictionary } from '@/lib/i18n';
 import { WHATSAPP_NUMBER } from '@/lib/config';
-import { formatCurrency } from '@/lib/format';
-import { nightsBetween } from '@/lib/format';
+import { formatCurrency, nightsBetween } from '@/lib/format';
+import { propertyTypeLabel } from '@/lib/labels';
+import { AREAS } from '@/data/areas';
 
 export interface MessageContext {
   locale: Locale;
@@ -31,6 +32,11 @@ function dateLine(locale: Locale, startDate?: string, endDate?: string): string 
     : `\n• Dates souhaitées : du ${startDate} au ${endDate} (${nights} nuit${nights > 1 ? 's' : ''})`;
 }
 
+/** Human-readable commune name — never send the raw area id to a customer. */
+function areaLabel(areaId: string, locale: Locale): string {
+  return AREAS.find((area) => area.id === areaId)?.name[locale] ?? areaId;
+}
+
 function footer(locale: Locale, fullName?: string, phone?: string): string {
   const parts: string[] = [];
   if (fullName) parts.push(locale === 'ar' ? `الاسم: ${fullName}` : `Nom : ${fullName}`);
@@ -43,7 +49,7 @@ export function buildPropertyMessage(
   ctx: MessageContext,
 ): string {
   const { locale } = ctx;
-  const area = property.area;
+  const area = areaLabel(property.area, locale);
   if (locale === 'ar') {
     return [
       header(locale),
@@ -51,7 +57,7 @@ export function buildPropertyMessage(
       `• المرجع: ${property.reference}`,
       `• العنوان: ${property.title.ar}`,
       `• البلدية: ${area}`,
-      `• النوع: ${property.type}`,
+      `• النوع: ${propertyTypeLabel(property.type, ctx.t)}`,
       `• السعر: ${formatCurrency(property.price)}${
         property.priceUnit === 'day'
           ? ' / يوم'
@@ -84,7 +90,7 @@ export function buildPropertyMessage(
     `• Référence : ${property.reference}`,
     `• Titre : ${property.title.fr}`,
     `• Commune : ${area}`,
-    `• Type : ${property.type}`,
+    `• Type : ${propertyTypeLabel(property.type, ctx.t)}`,
     `• Prix : ${formatCurrency(property.price)}${unit}`,
     dateLine(locale, ctx.startDate, ctx.endDate).trim(),
     ctx.message ? `\n• ${ctx.message}` : '',

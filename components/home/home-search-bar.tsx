@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 import type { RentalPeriod } from '@/types';
 import { useI18n } from '@/lib/i18n';
+import { propertyTypeLabel } from '@/lib/labels';
 import { AREAS } from '@/data/areas';
 import { PROPERTY_TYPES, RENTAL_PERIODS } from '@/lib/filters';
 import { formatCurrency } from '@/lib/format';
@@ -83,7 +84,7 @@ export function HomeSearchBar() {
                 <SelectItem value="all">{t.search.propertyTypePlaceholder}</SelectItem>
                 {PROPERTY_TYPES.map((item) => (
                   <SelectItem key={item} value={item}>
-                    {item}
+                    {propertyTypeLabel(item, t)}
                   </SelectItem>
                 ))}
               </SelectContent>

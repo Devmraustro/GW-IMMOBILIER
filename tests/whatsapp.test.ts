@@ -27,6 +27,26 @@ describe('buildPropertyMessage', () => {
     expect(message).toContain(property.reference);
   });
 
+  it('names the commune instead of leaking the area id', () => {
+    const message = buildPropertyMessage(property, { locale: 'fr', t: fr });
+    expect(message).toContain('Commune : Bab Ezzouar');
+    expect(message).not.toContain('bab-ezzouar');
+  });
+
+  it('uses the Arabic commune name in Arabic', () => {
+    const message = buildPropertyMessage(property, { locale: 'ar', t: ar });
+    expect(message).toContain('باب الزوار');
+    expect(message).not.toContain('bab-ezzouar');
+  });
+
+  it('translates the property type in the Arabic message', () => {
+    const villa = properties.find((item) => item.type === 'Villa');
+    expect(villa).toBeDefined();
+    const message = buildPropertyMessage(villa!, { locale: 'ar', t: ar });
+    expect(message).toContain(ar.properties.typeVilla);
+    expect(message).not.toContain('• النوع: Villa');
+  });
+
   it('appends the requested dates and the customer details', () => {
     const message = buildPropertyMessage(property, {
       locale: 'fr',

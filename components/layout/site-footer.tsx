@@ -114,7 +114,7 @@ export function SiteFooter() {
               <li>
                 <a
                   href={`tel:${PHONE_NUMBER.replace(/\s/g, '')}`}
-                  className="flex items-center gap-3 text-white/70 transition-colors hover:text-gold-400"
+                  className="-mx-1 flex items-center gap-3 rounded-lg px-1 py-1 text-white/70 transition-colors hover:text-gold-400"
                 >
                   <Phone className="size-4 shrink-0 text-gold-400" aria-hidden />
                   <span className="tabular-nums">{PHONE_NUMBER}</span>
@@ -125,7 +125,7 @@ export function SiteFooter() {
                   href={whatsappUrl(t.home.whatsappText)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 text-white/70 transition-colors hover:text-gold-400"
+                  className="-mx-1 flex items-center gap-3 rounded-lg px-1 py-1 text-white/70 transition-colors hover:text-gold-400"
                 >
                   <MessageCircle className="size-4 shrink-0 text-gold-400" aria-hidden />
                   <span className="tabular-nums">+{WHATSAPP_NUMBER}</span>
@@ -134,7 +134,7 @@ export function SiteFooter() {
               <li>
                 <a
                   href={`mailto:${CONTACT_EMAIL}`}
-                  className="flex items-center gap-3 text-white/70 transition-colors hover:text-gold-400"
+                  className="-mx-1 flex items-center gap-3 rounded-lg px-1 py-1 text-white/70 transition-colors hover:text-gold-400"
                 >
                   <Mail className="size-4 shrink-0 text-gold-400" aria-hidden />
                   <span className="break-all">{CONTACT_EMAIL}</span>

@@ -47,6 +47,7 @@ export const ar: Dictionary = {
     phone: 'الهاتف',
     email: 'البريد الإلكتروني',
     whatsapp: 'واتساب',
+    mapContributors: 'المساهمون',
     contact: 'اتصل بنا',
     all: 'الكل',
     yes: 'نعم',
@@ -171,6 +172,14 @@ export const ar: Dictionary = {
   },
   properties: {
     title: 'عقاراتنا',
+    eyebrow: 'الكتالوج',
+    typeF2: 'F2',
+    typeF3: 'F3',
+    typeF4: 'F4',
+    typeF5: 'F5',
+    typeStudio: 'ستوديو',
+    typeVilla: 'فيلا',
+    typeBureau: 'مكتب',
     subtitle:
       'شقق وستوديوهات وفيلات ومكاتب متوفرة في ولاية الجزائر. جميع الإعلانات أدناه أمثلة توضيحية.',
     countLabel: '{count} عقار يطابق بحثك',
@@ -223,6 +232,7 @@ export const ar: Dictionary = {
   },
   cars: {
     title: 'كراء السيارات',
+    eyebrow: 'التنقل',
     subtitle:
       'سيارات مدنية وصالونات وسيارات دفع رباعي وفاخرة متوفرة باليوم في ولاية الجزائر. أسطول توضيحي.',
     countLabel: '{count} سيارة تطابق بحثك',

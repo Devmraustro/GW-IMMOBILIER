@@ -48,6 +48,7 @@ export const fr = {
     phone: 'Téléphone',
     email: 'E-mail',
     whatsapp: 'WhatsApp',
+    mapContributors: 'contributors',
     contact: 'Contact',
     all: 'Tous',
     yes: 'Oui',
@@ -173,6 +174,14 @@ export const fr = {
   },
   properties: {
     title: 'Nos biens',
+    eyebrow: 'Catalogue',
+    typeF2: 'F2',
+    typeF3: 'F3',
+    typeF4: 'F4',
+    typeF5: 'F5',
+    typeStudio: 'Studio',
+    typeVilla: 'Villa',
+    typeBureau: 'Bureau',
     subtitle:
       'Appartements, studios, villas et bureaux disponibles dans la wilaya d’Alger. Toutes les annonces ci-dessous sont des exemples de démonstration.',
     countLabel: '{count} biens correspondent à votre recherche',
@@ -225,6 +234,7 @@ export const fr = {
   },
   cars: {
     title: 'Location de véhicules',
+    eyebrow: 'Mobilité',
     subtitle:
       'Citadines, berlines, SUV et véhicules de prestige disponibles à la journée dans la wilaya d’Alger. Flotte de démonstration.',
     countLabel: '{count} véhicules correspondent à votre recherche',

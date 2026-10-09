@@ -25,8 +25,9 @@ export const IS_PLACEHOLDER_CONTACT =
 
 /** OpenStreetMap tile endpoint (public, no key required). */
 export const OSM_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+export const OSM_COPYRIGHT_URL = 'https://www.openstreetmap.org/copyright';
 export const OSM_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+  `&copy; <a href="${OSM_COPYRIGHT_URL}">OpenStreetMap</a> contributors`;
 
 export const DEFAULT_MAP_CENTER = { lat: 36.7372, lng: 3.0 } as const;
 export const DEFAULT_MAP_ZOOM = 12;

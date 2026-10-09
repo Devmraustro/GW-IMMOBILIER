@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import { PropertyCatalog } from '@/components/properties/property-catalog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PropertyCardSkeleton } from '@/components/properties/property-card-skeleton';
+import { CatalogHeader } from '@/components/shared/catalog-header';
 
 export const metadata: Metadata = {
   title: 'Nos biens — location, vente et meublés à Alger',
@@ -14,17 +15,7 @@ export const metadata: Metadata = {
 export default function PropertiesPage() {
   return (
     <div className="container-page py-10 sm:py-14">
-      <header className="mb-10 max-w-2xl">
-        <p className="eyebrow">Catalogue</p>
-        <h1 className="mt-3 font-display text-4xl font-semibold sm:text-5xl">
-          Trouvez le bien qui vous correspond
-        </h1>
-        <p className="mt-4 text-base leading-relaxed text-ink-500">
-          Appartements, studios, villas et bureaux dans les neuf communes couvertes par GW
-          Immobilier. Utilisez les filtres pour affiner, puis consultez la fiche complète de chaque
-          bien.
-        </p>
-      </header>
+      <CatalogHeader section="properties" />
 
       <Suspense fallback={<CatalogFallback />}>
         <PropertyCatalog />

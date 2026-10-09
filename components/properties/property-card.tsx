@@ -6,6 +6,7 @@ import type { Property } from '@/types';
 import { useI18n } from '@/lib/i18n';
 import { useDemoStore } from '@/lib/demo-store';
 import { toast } from 'sonner';
+import { propertyTypeLabel } from '@/lib/labels';
 import { formatCurrency, formatSurface } from '@/lib/format';
 import { getArea } from '@/data/areas';
 import { cn } from '@/lib/utils';
@@ -73,7 +74,7 @@ export function PropertyCard({
 
         <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-3">
           <div className="pointer-events-auto flex flex-wrap gap-1.5">
-            <Badge variant="ink">{property.type}</Badge>
+            <Badge variant="ink">{propertyTypeLabel(property.type, t)}</Badge>
             {property.category !== 'rent' ? (
               <Badge variant="gold">{t.categories[property.category]}</Badge>
             ) : null}
