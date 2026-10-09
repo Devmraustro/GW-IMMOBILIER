@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="1200" height="900" role="img" aria-label="Illustration architecturale"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F4F2EE"/><stop offset="1" stop-color="#E4E1DA"/></linearGradient></defs><rect width="1200" height="900" fill="url(#bg)"/>
+<path d="M120 470 Q140 380 260 360 L360 300 Q400 280 460 280 H760 Q830 280 880 320 L1000 380 Q1080 400 1090 470 Z" fill="#4A4A51"/>
+<path d="M430 320 H560 L520 380 H400 Z" fill="#FFFFFF" opacity="0.28"/>
+<path d="M600 320 H740 Q790 320 820 380 H560 Z" fill="#FFFFFF" opacity="0.2"/>
+<rect x="120" y="470" width="970" height="40" rx="20" fill="#1B1B1D"/>
+<circle cx="360" cy="520" r="72" fill="#1B1B1D"/><circle cx="360" cy="520" r="34" fill="#E5B83F"/>
+<circle cx="860" cy="520" r="72" fill="#1B1B1D"/><circle cx="860" cy="520" r="34" fill="#E5B83F"/>
+<rect x="1000" y="410" width="90" height="34" rx="10" fill="#E5B83F"/>
+<rect x="150" y="430" width="70" height="24" rx="8" fill="#E5B83F" opacity="0.75"/>
+<path d="M0 610 H1200" stroke="#D8D3C8" stroke-width="2"/><g opacity="0.5"><rect x="554.0" y="836" width="92" height="26" rx="13" fill="#1B1B1D"/><text x="600.0" y="853" font-family="Georgia,serif" font-size="13" font-weight="700" fill="#E5B83F" text-anchor="middle" letter-spacing="2">GW</text></g><text x="600.0" y="878" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#AFAFB3" text-anchor="middle" letter-spacing="4">GW LOCATION</text></svg>
