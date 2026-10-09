@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  AlertTriangle,
   Building2,
   Car,
   ChevronLeft,
@@ -21,7 +20,6 @@ import { useI18n } from '@/lib/i18n';
 import { useDemoStore } from '@/lib/demo-store';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Logo } from '@/components/layout/logo';
 import {
   Dialog,
@@ -105,17 +103,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-dvh bg-sand-50">
-      {/* Demo banner */}
-      <div className="sticky top-0 z-40 border-b border-warning/30 bg-warning-soft">
-        <div className="container-page flex items-center gap-3 py-2.5">
-          <AlertTriangle className="size-4 shrink-0 text-warning" aria-hidden />
-          <p className="flex-1 text-xs leading-snug text-warning">{t.admin.demoBanner}</p>
-          <Badge variant="demo" className="hidden sm:inline-flex">
-            {t.admin.demoBadge}
-          </Badge>
-        </div>
-      </div>
-
       <div className="container-page py-6">
         <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
           {/* Sidebar */}
@@ -160,7 +147,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 <Menu aria-hidden />
                 {t.admin.dashboard}
               </Button>
-              <span className="text-xs text-ink-400">{t.admin.demoBadge}</span>
             </div>
             {children}
           </main>
