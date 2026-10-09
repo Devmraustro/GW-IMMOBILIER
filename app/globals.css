@@ -26,11 +26,20 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* Prevent horizontal overflow on small screens (RTL + LTR). */
-  html,
-  body {
+  /*
+   * Prevent horizontal overflow on small screens (RTL + LTR) without breaking
+   * `position: sticky`. `overflow-x: hidden` on <html> propagates to the
+   * viewport, and `overflow-x: clip` on <body> clips without turning the body
+   * into a scroll container — which is what would disable sticky headers.
+   */
+  html {
     max-width: 100%;
     overflow-x: hidden;
+  }
+
+  body {
+    max-width: 100%;
+    overflow-x: clip;
   }
 
   h1,

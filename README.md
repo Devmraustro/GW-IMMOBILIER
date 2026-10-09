@@ -87,7 +87,7 @@ Google-Maps itinerary links, WhatsApp inquiry flows, and a fully interactive
 | Framework | **Next.js 15** (App Router, React Server + Client Components) |
 | Language | **TypeScript** in `strict` mode (`noUnusedLocals`, `noUnusedParameters`) |
 | Styling | **Tailwind CSS 3.4** with a bespoke design system |
-| Components | shadcn/ui-style primitives built on **Radix UI** (dialog, select, slider, switch, tabs, dropdown, popover, label, separator, checkbox, tooltip) |
+| Components | shadcn/ui-style primitives built on **Radix UI** (dialog, select, slider, switch, label, separator) |
 | Icons | **Lucide** |
 | Map | **Leaflet 1.9 + react-leaflet 5**, **OpenStreetMap** tiles, **leaflet.markercluster** for clustering |
 | Dates & currency | Native `Intl` (Algerian dinar `DA`, `fr-DZ` / `ar-DZ` formats) |
@@ -254,6 +254,14 @@ Be explicit about these when presenting the prototype:
    empty rather than fabricated.
 7. **Placeholder contact details** until configured (see below); the UI shows a
    clearly labelled warning while they are placeholders.
+8. **The first paint is always French.** Pages are statically prerendered, and
+   the saved language lives in `localStorage`, which the browser cannot send
+   before the page arrives. A returning Arabic visitor therefore sees one frame
+   of French before the interface flips to RTL Arabic. Removing that frame
+   requires persisting the choice in a cookie and opting the routes into
+   dynamic rendering (`export const dynamic = 'force-dynamic'` or the Next.js
+   `cookies()` API) — deliberately left out here to keep the whole site static
+   and fast.
 
 ---
 
@@ -356,7 +364,7 @@ There are **no secrets** in this project and **no key is ever required**.
 npm run typecheck   # tsc --noEmit — 0 errors
 npm run lint        # ESLint — 0 warnings
 npm test            # Vitest — 95 tests, 7 files
-npm run build       # production build, 46 static pages
+npm run build       # production build, 48 static pages
 ```
 
 Covered by tests:
@@ -371,10 +379,23 @@ Covered by tests:
 | `tests/data.test.ts` | Integrity of the whole seed dataset |
 | `tests/i18n.test.ts` | FR/AR key parity, no empty strings, placeholder parity, slug helpers, geo helpers |
 
-Manual verification performed: every route returns HTTP 200 (unknown routes
-404 with the custom page), filters/sorting/map/detail pages/dashboard CRUD/persistence
-and Arabic RTL were exercised in the browser at 375 px, 768 px and 1440 px, and
-the console was checked for errors.
+### What was actually verified, and how
+
+| Check | Method | Result |
+| --- | --- | --- |
+| Typecheck | `tsc --noEmit` (strict) | 0 errors |
+| Lint | `next lint` | 0 warnings |
+| Unit tests | `vitest run` | 95 passed / 95 |
+| Production build | `next build` | 48/48 pages prerendered |
+| Every route responds | `curl` against `next dev` | 16 routes 200, unknown route 404 |
+| SEO surface | `curl` + HTML inspection | titles, descriptions, `sitemap.xml`, `robots.txt`, listing data present in the SSR HTML |
+| Dead interactive elements | source audit | every button/link has a handler or href |
+
+Not covered by automated checks, and therefore worth a manual pass before you
+present it: pixel-level layout at 375 / 768 / 1440 px, the Arabic RTL layout in
+a real browser, the browser console, and the Leaflet map tiles (the sandbox has
+no browser and no outbound access to the tile server, so the map was verified by
+code review and by the SSR shell only).
 
 ---
 

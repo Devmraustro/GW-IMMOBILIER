@@ -11,7 +11,6 @@ import {
   Loader2,
   Map as MapIcon,
   MapPin,
-  MessageCircle,
   Navigation,
   Ruler,
   Search,
@@ -27,7 +26,8 @@ import { AREAS } from '@/data/areas';
 import { PROPERTY_TYPES } from '@/lib/filters';
 import { formatCurrency, formatSurface } from '@/lib/format';
 import { requestCurrentPosition } from '@/lib/geo';
-import { buildPropertyMessage, whatsappUrl } from '@/lib/whatsapp';
+import { buildPropertyMessage } from '@/lib/whatsapp';
+import { WhatsAppButton } from '@/components/shared/whatsapp-button';
 import { cn, toggleInArray } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -457,18 +457,13 @@ export function MapExplorer() {
                           {t.mapPage.previewOpen}
                         </Link>
                       </Button>
-                      <Button asChild size="sm" variant="whatsapp">
-                        <a
-                          href={whatsappUrl(
-                            buildPropertyMessage(selected, { locale, t }),
-                          )}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label={t.common.whatsapp}
-                        >
-                          <MessageCircle aria-hidden />
-                        </a>
-                      </Button>
+                      <WhatsAppButton
+                        message={buildPropertyMessage(selected, { locale, t })}
+                        size="sm"
+                        label={t.common.whatsapp}
+                      >
+                        <span className="sr-only">{t.common.whatsapp}</span>
+                      </WhatsAppButton>
                       <DirectionsDialog
                         destination={selected.coordinates}
                         destinationLabel={`${pick(selected.title)} — ${getAreaName(selected.area)}`}

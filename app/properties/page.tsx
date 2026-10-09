@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import { PropertyCatalog } from '@/components/properties/property-catalog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PropertyCardSkeleton } from '@/components/properties/property-card-skeleton';
 
 export const metadata: Metadata = {
   title: 'Nos biens — location, vente et meublés à Alger',
@@ -41,7 +42,7 @@ function CatalogFallback() {
       </div>
       <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {Array.from({ length: 6 }).map((_, index) => (
-          <Skeleton key={index} className="h-[380px] w-full" />
+          <PropertyCardSkeleton key={index} />
         ))}
       </div>
     </div>
