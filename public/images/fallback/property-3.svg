@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" width="1200" height="900" role="img" aria-label="Illustration architecturale"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F4F2EE"/><stop offset="1" stop-color="#DFDCD4"/></linearGradient></defs><rect width="1200" height="900" fill="url(#bg)"/>
+<g fill="#1B1B1D">
+ <rect x="220" y="140" width="180" height="470"/>
+ <rect x="420" y="60" width="200" height="550"/>
+ <rect x="640" y="180" width="160" height="430"/>
+</g>
+<g fill="#E5B83F" opacity="0.9">
+ <rect x="245" y="190" width="55" height="55"/><rect x="325" y="190" width="55" height="55"/>
+ <rect x="245" y="290" width="55" height="55"/><rect x="325" y="290" width="55" height="55"/>
+ <rect x="245" y="390" width="55" height="55"/><rect x="325" y="390" width="55" height="55"/>
+ <rect x="445" y="110" width="60" height="60"/><rect x="535" y="110" width="60" height="60"/>
+ <rect x="445" y="215" width="60" height="60"/><rect x="535" y="215" width="60" height="60"/>
+ <rect x="445" y="320" width="60" height="60"/><rect x="535" y="320" width="60" height="60"/>
+ <rect x="445" y="425" width="60" height="60"/><rect x="535" y="425" width="60" height="60"/>
+ <rect x="665" y="230" width="50" height="50"/><rect x="735" y="230" width="50" height="50"/>
+ <rect x="665" y="330" width="50" height="50"/><rect x="735" y="330" width="50" height="50"/>
+</g>
+<path d="M180 610 H1020" stroke="#B98417" stroke-width="6"/><g opacity="0.5"><rect x="554.0" y="836" width="92" height="26" rx="13" fill="#1B1B1D"/><text x="600.0" y="853" font-family="Georgia,serif" font-size="13" font-weight="700" fill="#E5B83F" text-anchor="middle" letter-spacing="2">GW</text></g><text x="600.0" y="878" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#AFAFB3" text-anchor="middle" letter-spacing="4">GW IMMOBILIER</text></svg>
