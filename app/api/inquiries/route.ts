@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
 
   const clientIp =
     request.headers.get('x-real-ip')?.trim() ||
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    request.headers.get('x-forwarded-for')?.split(',').at(-1)?.trim() ||
     'unknown';
   const ipHash = createHash('sha256').update('public-inquiry:' + clientIp, 'utf8').digest('hex');
 
