@@ -1,6 +1,8 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import { ADMIN_SESSION_COOKIE, createAdminSessionToken } from '@/lib/admin-session';
+import { DatabaseNotConfiguredError } from '@/lib/server/record-repository';
+import { consumeAdminLoginAttempts } from '@/lib/server/login-rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -11,10 +13,12 @@ function constantTimeTextEqual(left: string, right: string): boolean {
   return timingSafeEqual(leftDigest, rightDigest);
 }
 
+const NO_STORE = { 'Cache-Control': 'no-store, max-age=0' };
+
 function responseError(message: string, status: number) {
   return NextResponse.json(
     { error: message },
-    { status, headers: { 'Cache-Control': 'no-store, max-age=0' } },
+    { status, headers: NO_STORE },
   );
 }
 
@@ -64,7 +68,36 @@ export async function POST(request: NextRequest) {
     sessionSecret.length < 32
   ) return responseError('ADMIN_AUTH_NOT_CONFIGURED', 503);
 
-  const emailMatches = constantTimeTextEqual(fields.email.trim().toLowerCase(), configuredEmail);
+  const clientIp =
+    request.headers.get('x-real-ip')?.trim() ||
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    'unknown';
+  const normalizedSubmittedEmail = fields.email.trim().toLowerCase();
+  const ipKeyHash = createHash('sha256').update('ip:' + clientIp, 'utf8').digest('hex');
+  const accountKeyHash = createHash('sha256')
+    .update('account:' + clientIp + ':' + normalizedSubmittedEmail, 'utf8')
+    .digest('hex');
+
+  try {
+    const rateLimit = await consumeAdminLoginAttempts([ipKeyHash, accountKeyHash]);
+    if (rateLimit.blocked) {
+      return NextResponse.json(
+        { error: 'TOO_MANY_ATTEMPTS' },
+        {
+          status: 429,
+          headers: { ...NO_STORE, 'Retry-After': String(rateLimit.retryAfterSeconds) },
+        },
+      );
+    }
+  } catch (error) {
+    if (error instanceof DatabaseNotConfiguredError) {
+      return responseError('DATABASE_NOT_CONFIGURED', 503);
+    }
+    console.error('[admin-login] rate limiter unavailable');
+    return responseError('ADMIN_AUTH_UNAVAILABLE', 503);
+  }
+
+  const emailMatches = constantTimeTextEqual(normalizedSubmittedEmail, configuredEmail);
   const passwordMatches = constantTimeTextEqual(fields.password, configuredPassword);
   if (!emailMatches || !passwordMatches) return responseError('INVALID_CREDENTIALS', 401);
 
