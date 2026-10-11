@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Building2,
   Car,
@@ -52,6 +52,7 @@ function CalendarIcon(props: { className?: string }) {
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { t, locale } = useI18n();
   const pathname = usePathname();
+  const router = useRouter();
   const { inquiries, persistenceMode } = useDemoStore();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -66,7 +67,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     } catch {
       // The admin boundary still blocks access if the request fails.
     }
-    window.location.assign('/admin/login');
+    router.replace('/admin/login');
   };
 
   if (pathname === '/admin/login') return <>{children}</>;
