@@ -83,6 +83,22 @@ BEGIN
 
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint
+    WHERE conname = 'gwi_reservations_valid_finances'
+      AND conrelid = 'gwi_reservations'::regclass
+  ) THEN
+    ALTER TABLE gwi_reservations
+      ADD CONSTRAINT gwi_reservations_valid_finances
+      CHECK (
+        jsonb_typeof(payload->'amount') = 'number' AND
+        jsonb_typeof(payload->'deposit') = 'number' AND
+        (payload->>'amount')::numeric >= 0 AND
+        (payload->>'deposit')::numeric >= 0 AND
+        (payload->>'deposit')::numeric <= (payload->>'amount')::numeric
+      );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
     WHERE conname = 'gwi_reservations_no_overlap'
       AND conrelid = 'gwi_reservations'::regclass
   ) THEN
