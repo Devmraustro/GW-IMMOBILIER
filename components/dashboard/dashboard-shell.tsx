@@ -80,6 +80,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     window.location.assign('/admin/login');
   };
 
+  if (pathname === '/admin/login') return <>{children}</>;
+
   const nav = (
     <nav aria-label={t.admin.dashboard} className="flex flex-col gap-1">
       {ITEMS.map((item) => {
