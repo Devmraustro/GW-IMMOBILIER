@@ -1,64 +1,79 @@
-# GW Immobilier Pro — foundation status
+# GW Immobilier Pro — implementation and release status
 
-## Delivered in this phase
+This document describes the current development branch, `pro/phase-1-foundation`. It is not a declaration that the hosted application is ready for customer use.
 
-- Server-side admin login using private environment credentials.
-- Signed HMAC-SHA-256 sessions with an eight-hour expiry.
-- HttpOnly, SameSite=Strict session cookie; Secure in production.
-- Middleware protection for every `/admin/*` route and every `/api/admin/*` route, except the intentionally public login/logout endpoints.
-- Logout action on desktop and mobile dashboard navigation.
-- FR/AR sign-in labels and admin error messages.
-- A PostgreSQL schema for properties, vehicles, inquiries, reservations and admin audit events.
-- An authenticated CRUD API at `/api/admin/records` with allowlisted collection names, input validation, bounded JSON request bodies and an audit entry for each create/update/delete.
-- Unit tests for session tokens and record validation.
+## Implemented in the branch
 
-## Required private environment variables
+- Next.js 16 with the `proxy.ts` convention protecting `/admin/*` and `/api/admin/*`.
+- Administrator sign-in using server-only `ADMIN_EMAIL` and `ADMIN_PASSWORD`, with HMAC-SHA-256 session tokens, an eight-hour expiry, HttpOnly/SameSite cookie settings, and Secure cookies in production.
+- Database-backed login throttling: eight attempts per 15-minute window per IP and IP+account hash. Missing database/credentials fail closed.
+- PostgreSQL schema for property listings, vehicles, inquiries, reservations, audit events, and admin/public rate-limit counters.
+- Server-side admin CRUD at `/api/admin/records`, with collection/field allowlists, payload validation, bounded JSON bodies, same-origin mutation checks, private/no-store responses, server-generated IDs/timestamps and audit records.
+- A PostgreSQL exclusion constraint prevents overlapping active reservations for the same item, including simultaneous concurrent inserts.
+- Public catalog reads at `GET /api/catalog?type=properties|vehicles&limit=120`. The route returns only listings whose server-stored `isDemo` is `false`; demo/seed records are not published by this endpoint.
+- Public inquiry submissions at `POST /api/inquiries`. The handler validates same-origin JSON, enforces a small body limit and accepted field list, checks published listing references, validates the inquiry domain model, rate-limits submissions by IP, and saves the lead in PostgreSQL. It does not send e-mail or SMS notifications.
+- The store adapter loads public listings and admin records through those APIs when live/database mode is enabled. It fails closed: if the database cannot be reached, it shows an unavailable state and does not fall back to seed records.
+- French and Arabic copy for database loading/errors and form failures.
+- Unit tests for session tokens, record validation and public inquiry domain validation.
 
-Configure these under Vercel → Project → Settings → Environment Variables. Never prefix credentials with `NEXT_PUBLIC_`.
+## Environment configuration
 
-- `ADMIN_EMAIL`: administrator e-mail address.
-- `ADMIN_PASSWORD`: a unique password with at least 16 characters.
-- `ADMIN_SESSION_SECRET`: a random secret of at least 32 characters. Generate one locally with:
+Configure secrets only in the target hosting provider's private environment settings. Never commit these values and never prefix secrets with `NEXT_PUBLIC_`.
+
+- `DATABASE_URL`: a connection string for a Neon PostgreSQL database. This branch uses `@neondatabase/serverless`; provision/configure Neon or deliberately replace the driver before choosing a different PostgreSQL provider.
+- `ADMIN_EMAIL`: the administrator's e-mail address.
+- `ADMIN_PASSWORD`: a unique password of at least 16 characters.
+- `ADMIN_SESSION_SECRET`: a randomly generated secret of at least 32 characters. Generate one locally with:
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 ```
 
-- `DATABASE_URL`: a PostgreSQL connection string. For serverless use, prefer the provider's pooled connection string. The project currently uses Neon's serverless SQL driver, which is intended for the hosted Neon PostgreSQL service.
+- `NEXT_PUBLIC_CATALOG_MODE`: optional. In development, an empty value uses demo fixtures; in production, an empty value defaults to database mode. Use `demo` only for an explicitly isolated internal prototype/preview, never on a public customer-facing deployment.
 
-All sensitive settings remain server-only. If credentials or the database are absent, sign-in fails closed or the API returns a configuration error; there are no development credentials embedded in source code.
+No real database connection or admin credentials have been provisioned in the hosted project yet. The migration has not been applied to a real database, so database-backed routes deliberately return a configuration/unavailable response until this is completed.
 
-## Set up PostgreSQL
+## Database setup
 
-1. Provision a PostgreSQL database through the Vercel Marketplace/Neon integration for this project, after confirming the plan and any billing implications.
-2. Add the connection string as the private `DATABASE_URL` variable for the intended Vercel environment. Do not commit the URL to Git.
-3. Apply `db/migrations/0001_initial.sql` to that database using the provider's SQL editor or a secure local PostgreSQL client.
-4. Add `ADMIN_EMAIL`, `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` to the same environment.
-5. Run CI and test the protected sign-in and API in a protected preview. Do not unpause the public project until all of these steps and the dependency-security review are complete.
+1. Provision a Neon PostgreSQL database after reviewing its plan and billing terms.
+2. Add its connection URL as private `DATABASE_URL` in the same hosting environment that will run the application.
+3. Apply `db/migrations/0001_initial.sql` using the provider's SQL editor or a secure local PostgreSQL client. Apply it before importing any data.
+4. Set `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `ADMIN_SESSION_SECRET` in private hosting variables. Do not send these secrets in chat or commit them.
+5. In a protected preview, test login, unauthorized access, listing/vehicle CRUD, public inquiry submission, rate limits, audit entries and reservation conflict handling against the real database.
 
 ## API contract
 
-All record routes require an authenticated admin session. Mutation requests must be same-origin JSON requests.
+Admin routes require a valid admin session.
 
 - `GET /api/admin/records?type=properties|vehicles|inquiries|reservations&limit=100`
+- `GET /api/admin/records?type=audit&limit=100`
 - `POST /api/admin/records` with `{ "type": "...", "record": { ... } }`
 - `PATCH /api/admin/records` with `{ "type": "...", "id": "...", "patch": { ... } }`
 - `DELETE /api/admin/records` with `{ "type": "...", "id": "..." }`
-- `GET /api/admin/records?type=audit&limit=100` reads audit events.
 
-The API uses strict allowlists for record types and patch fields; it does not interpolate user-provided table names. SQL mutations and audit entries are written within one PostgreSQL statement using CTEs. Listing slugs are uniquely indexed, and the API returns `503 DATABASE_NOT_CONFIGURED` until `DATABASE_URL` and the initial schema exist.
+Public routes:
 
-## Not yet Pro-complete
+- `GET /api/catalog?type=properties|vehicles&limit=120` returns non-demo records only.
+- `POST /api/inquiries` accepts customer inquiry fields. `status` and `channel` are set by the server and cannot be supplied by the client.
 
-The administration store now loads records from the authenticated PostgreSQL API and sends admin create/update/delete operations to the server. If the API is unauthenticated it returns to the login page; if storage is unavailable, the UI clears the business collections and presents an unavailable state instead of showing seeded data. Public property/vehicle catalogue pages and customer inquiry forms are still backed by the prototype seed/local state and must be migrated before this becomes a full operational SaaS. The API cannot be verified against a real database until the owner provisions/configures the database connection and runs the migration.
+All responses are private/no-store. The database uses JSONB payloads shaped like the existing UI models during this migration. Audit metadata intentionally avoids copying customer message/contact data.
 
-The database currently stores domain-shaped record payloads in PostgreSQL JSONB to preserve the app's existing data models during migration. Further hardening before customer production should include role-backed staff accounts, a distributed login rate limiter, production audit retention/exports, upload storage for real property images, backup/restore testing, and a migration of public inquiry submissions to the server.
+## Remaining work before customer production
+
+- The real database, private variables and migration still need to be provisioned and tested; the current hosted Vercel project remains paused/blocked.
+- Latest CI must pass on the final branch head. The most recent complete baseline passed before the current public persistence and framework/security changes, so it does not validate those later changes.
+- The dependency audit still reported nine vulnerabilities (seven high, two moderate) after the compatible dependency refresh. Review/remediate these before release; Tailwind v3's transitive dependency tree remains the main outstanding issue.
+- Add private object storage for uploaded property/vehicle media, database backup/restore validation, and production monitoring.
+- Validate public catalog rendering/detail metadata with a real database; enable customer form notifications if the business requires them.
+- Replace placeholder contact information with owner-verified details.
+- Staff account/role management, multi-tenant isolation and operator/admin roles are not implemented.
 
 ## Release gate
 
-Do not unpause public Vercel domains until:
-- CI typecheck, lint, tests and production build all pass on the latest PR commit after the most recent UI-store integration changes.
-- `npm audit` high/critical findings are reviewed and remediated or explicitly accepted with documented evidence.
-- Database credentials and the migration are configured successfully.
-- Sign-in, CRUD, audit events, conflict handling and unauthorized access are smoke-tested against the real database.
-- The user interface no longer reports successful local-only saves as business-data persistence.
+Do not merge to `main`, deploy to public customer domains or unpause Vercel until all of the following are true:
+
+- TypeScript, ESLint, unit tests and production build pass on the exact final commit.
+- The remaining dependency vulnerabilities have been remediated or explicitly accepted based on documented risk.
+- Private database/admin environment variables are configured and the migration is applied.
+- Real-database smoke tests pass for login, unauthorized requests, catalog publication, CRUD, audit, rate limiting, and overlapping reservation rejection.
+- Contact details are verified, and no demo data or demo mode is exposed to customers.
