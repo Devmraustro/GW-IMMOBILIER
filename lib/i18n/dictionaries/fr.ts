@@ -413,6 +413,8 @@ export const fr = {
     whatsappSubmit: 'Envoyer sur WhatsApp',
     successTitle: 'Demande enregistrée',
     successText: 'Votre demande a été transmise à l’agence. Nous vous répondrons dans les meilleurs délais.',
+    demoSuccessTitle: 'Demande enregistrée localement',
+    demoSuccessText: 'Mode démonstration : ce formulaire reste enregistré dans ce navigateur et n’a pas été envoyé à l’agence.',
     submitFailed: 'Votre demande n’a pas pu être envoyée. Réessayez dans quelques minutes.',
     whatsappSuccessTitle: 'WhatsApp ouvert',
     whatsappSuccessText: 'Votre message pré-rempli a été ouvert dans WhatsApp.',
