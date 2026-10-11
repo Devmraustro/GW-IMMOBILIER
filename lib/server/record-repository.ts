@@ -59,19 +59,19 @@ export async function listAdminRecords(
   switch (type) {
     case 'properties':
       rows = await sql`SELECT id, payload, created_at, updated_at
-        FROM gwi_properties ORDER BY updated_at DESC, id ASC LIMIT ${safeLimit}`;
+        FROM gwi_properties ORDER BY updated_at DESC, id ASC LIMIT ${safeLimit}` as unknown as StoredRecordRow[];
       break;
     case 'vehicles':
       rows = await sql`SELECT id, payload, created_at, updated_at
-        FROM gwi_vehicles ORDER BY updated_at DESC, id ASC LIMIT ${safeLimit}`;
+        FROM gwi_vehicles ORDER BY updated_at DESC, id ASC LIMIT ${safeLimit}` as unknown as StoredRecordRow[];
       break;
     case 'inquiries':
       rows = await sql`SELECT id, payload, created_at, updated_at
-        FROM gwi_inquiries ORDER BY updated_at DESC, id ASC LIMIT ${safeLimit}`;
+        FROM gwi_inquiries ORDER BY updated_at DESC, id ASC LIMIT ${safeLimit}` as unknown as StoredRecordRow[];
       break;
     case 'reservations':
       rows = await sql`SELECT id, payload, created_at, updated_at
-        FROM gwi_reservations ORDER BY updated_at DESC, id ASC LIMIT ${safeLimit}`;
+        FROM gwi_reservations ORDER BY updated_at DESC, id ASC LIMIT ${safeLimit}` as unknown as StoredRecordRow[];
       break;
   }
 
@@ -101,7 +101,7 @@ export async function createAdminRecord(
           FROM saved RETURNING id
         )
         SELECT id, payload, created_at, updated_at FROM saved
-      `;
+      ` as unknown as StoredRecordRow[];
       break;
     case 'vehicles':
       rows = await sql`
@@ -116,7 +116,7 @@ export async function createAdminRecord(
           FROM saved RETURNING id
         )
         SELECT id, payload, created_at, updated_at FROM saved
-      `;
+      ` as unknown as StoredRecordRow[];
       break;
     case 'inquiries':
       rows = await sql`
@@ -131,7 +131,7 @@ export async function createAdminRecord(
           FROM saved RETURNING id
         )
         SELECT id, payload, created_at, updated_at FROM saved
-      `;
+      ` as unknown as StoredRecordRow[];
       break;
     case 'reservations':
       rows = await sql`
@@ -146,7 +146,7 @@ export async function createAdminRecord(
           FROM saved RETURNING id
         )
         SELECT id, payload, created_at, updated_at FROM saved
-      `;
+      ` as unknown as StoredRecordRow[];
       break;
   }
 
@@ -181,7 +181,7 @@ export async function updateAdminRecord(
           FROM saved RETURNING id
         )
         SELECT id, payload, created_at, updated_at FROM saved
-      `;
+      ` as unknown as StoredRecordRow[];
       break;
     case 'vehicles':
       rows = await sql`
@@ -198,7 +198,7 @@ export async function updateAdminRecord(
           FROM saved RETURNING id
         )
         SELECT id, payload, created_at, updated_at FROM saved
-      `;
+      ` as unknown as StoredRecordRow[];
       break;
     case 'inquiries':
       rows = await sql`
@@ -215,7 +215,7 @@ export async function updateAdminRecord(
           FROM saved RETURNING id
         )
         SELECT id, payload, created_at, updated_at FROM saved
-      `;
+      ` as unknown as StoredRecordRow[];
       break;
     case 'reservations':
       rows = await sql`
@@ -232,7 +232,7 @@ export async function updateAdminRecord(
           FROM saved RETURNING id
         )
         SELECT id, payload, created_at, updated_at FROM saved
-      `;
+      ` as unknown as StoredRecordRow[];
       break;
   }
 
@@ -259,7 +259,7 @@ export async function deleteAdminRecord(
           FROM deleted RETURNING id
         )
         SELECT id FROM deleted
-      `;
+      ` as unknown as Array<{ id: string }>;
       break;
     case 'vehicles':
       rows = await sql`
@@ -272,7 +272,7 @@ export async function deleteAdminRecord(
           FROM deleted RETURNING id
         )
         SELECT id FROM deleted
-      `;
+      ` as unknown as Array<{ id: string }>;
       break;
     case 'inquiries':
       rows = await sql`
@@ -285,7 +285,7 @@ export async function deleteAdminRecord(
           FROM deleted RETURNING id
         )
         SELECT id FROM deleted
-      `;
+      ` as unknown as Array<{ id: string }>;
       break;
     case 'reservations':
       rows = await sql`
@@ -298,7 +298,7 @@ export async function deleteAdminRecord(
           FROM deleted RETURNING id
         )
         SELECT id FROM deleted
-      `;
+      ` as unknown as Array<{ id: string }>;
       break;
   }
 
