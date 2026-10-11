@@ -15,6 +15,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import EmptyState from '@/components/shared/empty-state';
+import CatalogPersistenceState from '@/components/shared/catalog-persistence-state';
 import { PropertyCard } from './property-card';
 import {
   Select,
@@ -69,7 +70,7 @@ export function PropertyCatalog() {
   const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { properties } = useDemoStore();
+  const { properties, persistenceMode } = useDemoStore();
 
   const [filters, setFilters] = useState<PropertyFilters>(() =>
     filtersFromParams(new URLSearchParams(searchParams?.toString() ?? '')),
@@ -95,6 +96,10 @@ export function PropertyCatalog() {
 
   const activeCount = countActivePropertyFilters(filters);
   const reset = () => setFilters(DEFAULT_PROPERTY_FILTERS);
+
+  if (persistenceMode === 'loading' || persistenceMode === 'unavailable') {
+    return <CatalogPersistenceState />;
+  }
 
   return (
     <div className="grid gap-8 lg:grid-cols-[300px_1fr]">

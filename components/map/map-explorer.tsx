@@ -54,7 +54,6 @@ export function MapExplorer() {
   const [userLocation, setUserLocation] = useState<GeoPoint | null>(null);
   const [locating, setLocating] = useState(false);
   const [tilesFailed, setTilesFailed] = useState(false);
-  const [resizeKey, setResizeKey] = useState(0);
   const mapRef = useRef<L.Map | null>(null);
 
   const results = useMemo(
@@ -74,15 +73,13 @@ export function MapExplorer() {
 
   const selected = results.find((item) => item.id === selectedId) ?? null;
 
+  // Re-measure the map after the responsive panel layout changes.
   useEffect(() => {
-    if (selectedId && !results.some((item) => item.id === selectedId)) {
-      setSelectedId(null);
-    }
-  }, [results, selectedId]);
-
-  // Re-measure the map when the mobile panel switches.
-  useEffect(() => {
-    setResizeKey((value) => value + 1);
+    const id = window.setTimeout(
+      () => mapRef.current?.invalidateSize({ animate: false }),
+      60,
+    );
+    return () => window.clearTimeout(id);
   }, [mobileView]);
 
   const focusProperty = (property: (typeof results)[number]) => {
@@ -383,7 +380,6 @@ export function MapExplorer() {
               userLocation={userLocation}
               mapRef={mapRef}
               onTilesError={() => setTilesFailed(true)}
-              resizeKey={resizeKey}
             />
 
             {tilesFailed ? (

@@ -208,7 +208,7 @@ export function PropertyManager() {
     setFormOpen(true);
   };
 
-  const save = () => {
+  const save = async () => {
     const nextErrors: Record<string, string> = {};
     if (!draft.titleFr.trim()) nextErrors.titleFr = t.admin.requiredField;
     if (!draft.descriptionFr.trim()) nextErrors.descriptionFr = t.admin.requiredField;
@@ -268,19 +268,21 @@ export function PropertyManager() {
 
     if (editing && draft.id) {
       const current = properties.find((item) => item.id === draft.id);
-      updateProperty(draft.id, {
+      const result = await updateProperty(draft.id, {
         ...payload,
         slug: current?.slug ?? slugify(payload.title.fr),
         reference: current?.reference ?? `GWI-${createId('X').slice(-4).toUpperCase()}`,
       });
+      if (!result.ok) return;
       toast.success(t.admin.saved);
     } else {
       const taken = properties.map((item) => item.slug);
-      addProperty({
+      const result = await addProperty({
         ...payload,
         slug: uniqueSlug(payload.title.fr, taken),
         reference: `GWI-N-${(properties.length + 1).toString().padStart(4, '0')}`,
       });
+      if (!result.ok) return;
       toast.success(t.admin.created);
     }
 
@@ -397,8 +399,9 @@ export function PropertyManager() {
                     <Select
                       value={property.availability.status}
                       onValueChange={(value) => {
-                        togglePropertyAvailability(property.id, value as AvailabilityStatus);
-                        toast.success(t.admin.availabilityUpdated);
+                        void togglePropertyAvailability(property.id, value as AvailabilityStatus).then((result) => {
+                          if (result.ok) toast.success(t.admin.availabilityUpdated);
+                        });
                       }}
                     >
                       <SelectTrigger className="h-9 w-36 text-xs">
@@ -417,11 +420,12 @@ export function PropertyManager() {
                     <Switch
                       checked={property.availability.status === 'available'}
                       onCheckedChange={(checked) => {
-                        togglePropertyAvailability(
+                        void togglePropertyAvailability(
                           property.id,
                           checked ? 'available' : 'unavailable',
-                        );
-                        toast.success(t.admin.availabilityUpdated);
+                        ).then((result) => {
+                          if (result.ok) toast.success(t.admin.availabilityUpdated);
+                        });
                       }}
                       aria-label={t.admin.availabilityToggle}
                     />
@@ -874,8 +878,10 @@ export function PropertyManager() {
             </Button>
             <Button
               variant="danger"
-              onClick={() => {
-                if (deleteId) deleteProperty(deleteId);
+              onClick={async () => {
+                if (!deleteId) return;
+                const result = await deleteProperty(deleteId);
+                if (!result.ok) return;
                 setDeleteId(null);
                 toast.success(t.admin.deleted);
               }}

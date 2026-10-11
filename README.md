@@ -9,10 +9,7 @@ fleet, an **interactive Leaflet/OpenStreetMap map with marker clustering**,
 Google-Maps itinerary links, WhatsApp inquiry flows, and a fully interactive
 **demonstration administration dashboard**.
 
-> ⚠️ **Demonstration mode.** Every listing, vehicle, inquiry, reservation and
-> statistic is **fictional seed data**. There is no backend, no database and no
-> authentication. Contact details are placeholders until the owner supplies
-> verified ones. See [Demo-mode limitations](#demo-mode-limitations).
+> ⚠️ **Pro release is not yet enabled.** The branch now includes protected administrator access, PostgreSQL CRUD, a public catalogue API that returns only published (non-demo) records, and server-side inquiry submission. Production defaults to database mode and will not display seeded listings if the database is unavailable. The database and private credentials have not yet been provisioned in the hosted environment, and the public domain remains paused. Contact details must still be verified by the owner. See [Pro foundation status](docs/PRO_FOUNDATION.md).
 
 ---
 
@@ -41,6 +38,8 @@ Google-Maps itinerary links, WhatsApp inquiry flows, and a fully interactive
 
 ## What the project does
 
+> Pro implementation status: the administration store uses the protected PostgreSQL API; public catalog requests use `/api/catalog`; and customer form submissions use the rate-limited `/api/inquiries` endpoint. Live database provisioning, public deployment verification, image storage and staff roles remain release blockers. See [docs/PRO_FOUNDATION.md](docs/PRO_FOUNDATION.md).
+
 **For customers**
 
 - Discover the brand on a premium, photography-led home page with a working
@@ -65,7 +64,7 @@ Google-Maps itinerary links, WhatsApp inquiry flows, and a fully interactive
 - Switch the entire interface between **French (default, LTR)** and
   **Arabic (RTL)** — the choice survives navigation and refreshes.
 
-**For the owner (demonstration dashboard at `/admin`)**
+**For the owner (protected admin dashboard at `/admin`)**
 
 - Overview computed **from the live data** (never hardcoded): total listings,
   active properties, available vehicles, pending inquiries, upcoming
@@ -226,8 +225,7 @@ renders a broken-image icon and never breaks the layout, even fully offline.
 
 ## Administration dashboard
 
-- Persistent demo banner + `Démo` badge; `/admin` is excluded from
-  `robots.txt` and from the sitemap.
+- `/admin` is protected by a signed, HttpOnly session cookie and private server-side credentials. Admin records are loaded and mutated through the protected PostgreSQL API; the dashboard refuses to show records if the database cannot be reached. The route remains excluded from `robots.txt` and the sitemap.
 - Every KPI is derived from the current store, never hardcoded.
 - **Double-booking detection is real logic** (`lib/availability.ts`, unit
   tested): ranges are half-open — a stay ending on the 10th frees the listing
@@ -241,14 +239,9 @@ renders a broken-image icon and never breaks the layout, even fully offline.
 
 Be explicit about these when presenting the prototype:
 
-1. **No backend, no database, no authentication.** Anyone who can reach
-   `/admin` can edit it. The dashboard is a *process demonstration*, not a
-   secure area.
-2. **Persistence is `localStorage` only.** Changes are private to one browser
-   on one device; clearing site data resets everything.
-3. **Forms do not send e-mail or messages.** Form submissions are stored
-   locally and appear in the dashboard. WhatsApp actions open `wa.me` with a
-   pre-filled message that the customer reviews and sends themselves.
+1. **Live backend setup is not complete.** The admin area and `/api/admin/*` routes are gated by a signed, HttpOnly, SameSite session. The admin store loads business records from PostgreSQL; the public catalog only returns records whose server-managed `isDemo` flag is false; and inquiry forms use a same-origin, rate-limited server endpoint. The database URL and admin credentials have not been provisioned in the hosted environment, so the catalog and protected dashboard remain unavailable until the private settings and migration are applied.
+2. **Local persistence is only for the explicit demo mode.** In development, or when `NEXT_PUBLIC_CATALOG_MODE=demo` is explicitly set, demo edits remain private to one browser. Production defaults to database mode unless an explicit demo override is configured; never use that override for a customer-facing deployment.
+3. **Form notifications are not configured.** In database mode, public form submissions are validated and saved to PostgreSQL for the admin dashboard, but no e-mail/SMS notification is sent. WhatsApp actions open `wa.me` with a pre-filled message that the customer reviews and sends themselves.
 4. **No payments.** The finance board is an operational view, not accounting.
 5. **No guaranteed booking.** Reservations made in the dashboard are calendar
    entries; there is no contract, payment or confirmation e-mail step.
@@ -380,8 +373,7 @@ NEXT_PUBLIC_SITE_URL=https://gw-immobilier.dz
 
 ## Environment variables
 
-All variables are optional and public (`NEXT_PUBLIC_*`). See `.env.example`.
-There are **no secrets** in this project and **no key is ever required**.
+Public contact and site settings use `NEXT_PUBLIC_*`. Protected admin access uses the private server-side variables `ADMIN_EMAIL`, `ADMIN_PASSWORD` (minimum 16 characters) and `ADMIN_SESSION_SECRET` (minimum 32 characters). Never prefix admin secrets with `NEXT_PUBLIC_`. See `.env.example` and `docs/PRO_FOUNDATION.md`.
 
 ---
 
@@ -487,10 +479,7 @@ Recommended production path:
 1. **Database** — PostgreSQL with Prisma (or Drizzle). Map `types/index.ts`
    directly to tables; `Property`, `Vehicle`, `Inquiry`, `Reservation` are
    already persistence-shaped.
-2. **Authentication & authorisation** — NextAuth.js or Clerk for the admin
-   area, plus **server-side authorisation on every mutation** (never trust the
-   client). Add middleware protecting `/admin/*` and role checks in the API
-   routes.
+2. **Authentication & authorisation** — the first Pro foundation adds a signed session and protection for `/admin/*` and `/api/admin/*`, using one server-configured administrator. Before a real Pro release, add database-backed users/roles and enforce permissions in every mutation handler.
 3. **Storage** — S3 / Cloudinary / Vercel Blob for listing photos, replacing
    the “one URL per line” textarea in the admin forms.
 4. **Server actions or route handlers** — `/api/properties`, `/api/vehicles`,

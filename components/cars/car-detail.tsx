@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 import { useDemoStore } from '@/lib/demo-store';
+import CatalogPersistenceState from '@/components/shared/catalog-persistence-state';
 import { buildVehicleMessage, whatsappUrl } from '@/lib/whatsapp';
 import { formatCurrency } from '@/lib/format';
 import { getArea } from '@/data/areas';
@@ -53,14 +54,14 @@ const FUEL_KEYS = {
 
 export function CarDetail({ slug }: { slug: string }) {
   const { t, pick, locale } = useI18n();
-  const { vehicles, hydrated } = useDemoStore();
+  const { vehicles, hydrated, persistenceMode } = useDemoStore();
   const vehicle = useMemo(() => vehicles.find((v) => v.slug === slug), [vehicles, slug]);
-  const [missing, setMissing] = useState(false);
   const mapRef = useRef<null | import('leaflet').Map>(null);
-
-  useEffect(() => {
-    if (hydrated && !vehicle) setMissing(true);
-  }, [hydrated, vehicle]);
+  const missing =
+    hydrated &&
+    persistenceMode !== 'loading' &&
+    persistenceMode !== 'unavailable' &&
+    !vehicle;
 
   if (missing) {
     return (
@@ -75,6 +76,14 @@ export function CarDetail({ slug }: { slug: string }) {
             </Button>
           }
         />
+      </div>
+    );
+  }
+
+  if (persistenceMode === 'loading' || persistenceMode === 'unavailable') {
+    return (
+      <div className="container-page py-16">
+        <CatalogPersistenceState />
       </div>
     );
   }

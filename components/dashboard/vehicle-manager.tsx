@@ -157,7 +157,7 @@ export function VehicleManager() {
     setOpen(true);
   };
 
-  const save = () => {
+  const save = async () => {
     const nextErrors: Record<string, string> = {};
     if (!draft.brand.trim()) nextErrors.brand = t.admin.requiredField;
     if (!draft.model.trim()) nextErrors.model = t.admin.requiredField;
@@ -212,18 +212,20 @@ export function VehicleManager() {
 
     if (editing && draft.id) {
       const current = vehicles.find((item) => item.id === draft.id);
-      updateVehicle(draft.id, {
+      const result = await updateVehicle(draft.id, {
         ...payload,
         slug: current?.slug ?? slugify(`${payload.brand} ${payload.model}`),
         reference: current?.reference ?? `GWV-${(vehicles.length + 1).toString().padStart(3, '0')}`,
       });
+      if (!result.ok) return;
       toast.success(t.admin.saved);
     } else {
-      addVehicle({
+      const result = await addVehicle({
         ...payload,
         slug: uniqueSlug(`${payload.brand} ${payload.model}`, vehicles.map((v) => v.slug)),
         reference: `GWV-N-${(vehicles.length + 1).toString().padStart(3, '0')}`,
       });
+      if (!result.ok) return;
       toast.success(t.admin.created);
     }
     setOpen(false);
@@ -309,8 +311,9 @@ export function VehicleManager() {
                     <Switch
                       checked={vehicle.available}
                       onCheckedChange={(checked) => {
-                        toggleVehicleAvailability(vehicle.id, checked);
-                        toast.success(t.admin.availabilityUpdated);
+                        void toggleVehicleAvailability(vehicle.id, checked).then((result) => {
+                          if (result.ok) toast.success(t.admin.availabilityUpdated);
+                        });
                       }}
                       aria-label={t.admin.fieldAvailable}
                     />
@@ -625,8 +628,10 @@ export function VehicleManager() {
             </Button>
             <Button
               variant="danger"
-              onClick={() => {
-                if (deleteId) deleteVehicle(deleteId);
+              onClick={async () => {
+                if (!deleteId) return;
+                const result = await deleteVehicle(deleteId);
+                if (!result.ok) return;
                 setDeleteId(null);
                 toast.success(t.admin.deleted);
               }}

@@ -12,9 +12,6 @@ const nextConfig = {
       { protocol: 'https', hostname: 'upload.wikimedia.org' },
     ],
   },
-  eslint: {
-    dirs: ['app', 'components', 'lib', 'data', 'types', 'tests'],
-  },
 };
 
 export default nextConfig;

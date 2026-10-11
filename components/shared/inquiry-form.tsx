@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { CheckCircle2, MessageCircle, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Property, Vehicle } from '@/types';
@@ -26,7 +26,7 @@ interface InquiryFormProps {
 
 export function InquiryForm({ property, vehicle, requireDates, className }: InquiryFormProps) {
   const { t, tpl, locale } = useI18n();
-  const { addInquiry } = useDemoStore();
+  const { submitInquiry, persistenceMode } = useDemoStore();
 
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -34,15 +34,10 @@ export function InquiryForm({ property, vehicle, requireDates, className }: Inqu
   const messagePlaceholder = property
     ? t.inquiry.messagePropertyPlaceholder
     : t.inquiry.messageVehiclePlaceholder;
-  const [message, setMessage] = useState(messagePlaceholder);
-  // Once the visitor has typed something we must never overwrite it, but a
-  // language switch should still translate the untouched default text.
-  const [messageEdited, setMessageEdited] = useState(false);
-
-  useEffect(() => {
-    if (!messageEdited) setMessage(messagePlaceholder);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locale]);
+  // The untouched default follows the active language. Once edited,
+  // preserve the user's draft across language changes.
+  const [messageDraft, setMessageDraft] = useState<string | null>(null);
+  const message = messageDraft ?? messagePlaceholder;
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -82,24 +77,33 @@ export function InquiryForm({ property, vehicle, requireDates, className }: Inqu
     }
 
     setSending(true);
-    // Demo flow: stored locally, no backend call is made.
-    await new Promise((resolve) => setTimeout(resolve, 450));
-    addInquiry({
-      type: property ? 'property' : vehicle ? 'vehicle' : 'general',
-      status: 'new',
-      channel: 'form',
-      fullName: fullName.trim(),
-      phone: phone.trim(),
-      email: email.trim() || undefined,
-      message: message.trim(),
-      propertyId: property?.id,
-      vehicleId: vehicle?.id,
-      startDate: startDate || undefined,
-      endDate: endDate || undefined,
-    });
-    setSending(false);
-    setSubmitted(true);
-    toast.success(t.inquiry.successTitle, { description: t.inquiry.successText });
+    try {
+      await submitInquiry({
+        type: property ? 'property' : vehicle ? 'vehicle' : 'general',
+        status: 'new',
+        channel: 'form',
+        fullName: fullName.trim(),
+        phone: phone.trim(),
+        email: email.trim() || undefined,
+        message: message.trim(),
+        propertyId: property?.id,
+        vehicleId: vehicle?.id,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+      });
+      setSubmitted(true);
+      toast.success(
+        persistenceMode === 'demo' ? t.inquiry.demoSuccessTitle : t.inquiry.successTitle,
+        {
+          description:
+            persistenceMode === 'demo' ? t.inquiry.demoSuccessText : t.inquiry.successText,
+        },
+      );
+    } catch {
+      toast.error(t.inquiry.submitFailed);
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleWhatsApp = () => {
@@ -124,9 +128,7 @@ export function InquiryForm({ property, vehicle, requireDates, className }: Inqu
     setEmail('');
     setStartDate('');
     setEndDate('');
-    setMessage(
-      property ? t.inquiry.messagePropertyPlaceholder : t.inquiry.messageVehiclePlaceholder,
-    );
+    setMessageDraft(null);
     setErrors({});
   };
 
@@ -271,10 +273,7 @@ export function InquiryForm({ property, vehicle, requireDates, className }: Inqu
           <Textarea
             id="inq-message"
             value={message}
-            onChange={(event) => {
-              setMessageEdited(true);
-              setMessage(event.target.value);
-            }}
+            onChange={(event) => setMessageDraft(event.target.value)}
             aria-invalid={Boolean(errors.message)}
             className="mt-1.5"
           />

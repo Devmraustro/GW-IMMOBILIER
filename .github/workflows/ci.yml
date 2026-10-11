@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Typecheck, lint, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Dependency audit diagnostic
+        continue-on-error: true
+        shell: bash
+        run: |
+          npm audit --json > "$RUNNER_TEMP/npm-audit.json" || true
+          node - "$RUNNER_TEMP/npm-audit.json" <<'NODE'
+          const fs = require('node:fs');
+          const audit = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          console.log('Vulnerability summary:', JSON.stringify(audit.metadata?.vulnerabilities ?? {}));
+          for (const [name, advisory] of Object.entries(audit.vulnerabilities ?? {})) {
+            if (!['high', 'critical'].includes(advisory.severity)) continue;
+            console.log(JSON.stringify({
+              name,
+              severity: advisory.severity,
+              range: advisory.range,
+              via: (advisory.via ?? []).map(item =>
+                typeof item === 'string' ? item : { title: item.title, url: item.url, range: item.range }
+              ),
+              fixAvailable: advisory.fixAvailable
+            }));
+          }
+          NODE
+
+      - name: Dependency audit gate
+        run: npm audit --audit-level=moderate
+
+      - name: TypeScript
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build
+
+  database-contract:
+    name: PostgreSQL migration + reservation constraints
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: gwi_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d gwi_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+
+      - name: Apply migration twice to verify syntax and idempotency
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: gwi_test
+        run: |
+          psql --set ON_ERROR_STOP=1 --file db/migrations/0001_initial.sql
+          psql --set ON_ERROR_STOP=1 --file db/migrations/0001_initial.sql
+
+      - name: Verify database booking rules
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: gwi_test
+        run: psql --set ON_ERROR_STOP=1 --file tests/postgres-reservations.smoke.sql

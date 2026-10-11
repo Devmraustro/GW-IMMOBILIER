@@ -31,7 +31,7 @@ import Reveal from '@/components/shared/reveal';
 
 export function ContactContent() {
   const { t, pick } = useI18n();
-  const { addInquiry } = useDemoStore();
+  const { submitInquiry, persistenceMode } = useDemoStore();
 
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -56,19 +56,29 @@ export function ContactContent() {
     }
 
     setSending(true);
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    addInquiry({
-      type: 'general',
-      status: 'new',
-      channel: 'form',
-      fullName: fullName.trim(),
-      phone: phone.trim(),
-      email: email.trim() || undefined,
-      message: `${subject.trim()} — ${message.trim()} (préférence: ${preference})`,
-    });
-    setSending(false);
-    setSent(true);
-    toast.success(t.contact.successTitle, { description: t.contact.successText });
+    try {
+      await submitInquiry({
+        type: 'general',
+        status: 'new',
+        channel: 'form',
+        fullName: fullName.trim(),
+        phone: phone.trim(),
+        email: email.trim() || undefined,
+        message: `${subject.trim()} — ${message.trim()} (préférence: ${preference})`,
+      });
+      setSent(true);
+      toast.success(
+        persistenceMode === 'demo' ? t.inquiry.demoSuccessTitle : t.contact.successTitle,
+        {
+          description:
+            persistenceMode === 'demo' ? t.inquiry.demoSuccessText : t.contact.successText,
+        },
+      );
+    } catch {
+      toast.error(t.inquiry.submitFailed);
+    } finally {
+      setSending(false);
+    }
   };
 
   const openWhatsApp = () => {
@@ -109,9 +119,11 @@ export function ContactContent() {
           {sent ? (
             <div className="py-10 text-center">
               <CheckCircle2 className="mx-auto size-11 text-success" aria-hidden />
-              <h2 className="mt-4 font-display text-2xl font-semibold">{t.contact.successTitle}</h2>
+              <h2 className="mt-4 font-display text-2xl font-semibold">
+                {persistenceMode === 'demo' ? t.inquiry.demoSuccessTitle : t.contact.successTitle}
+              </h2>
               <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-ink-500">
-                {t.contact.successText}
+                {persistenceMode === 'demo' ? t.inquiry.demoSuccessText : t.contact.successText}
               </p>
               <div className="mt-7 flex flex-wrap justify-center gap-3">
                 <Button variant="outline" onClick={reset}>

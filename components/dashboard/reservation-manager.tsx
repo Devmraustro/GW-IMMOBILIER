@@ -155,7 +155,7 @@ export function ReservationManager() {
     setOpen(true);
   };
 
-  const save = () => {
+  const save = async () => {
     const nextErrors: Record<string, string> = {};
     if (!draft.itemId) nextErrors.itemId = t.admin.requiredField;
     if (!draft.customerName.trim()) nextErrors.customerName = t.admin.requiredField;
@@ -217,10 +217,12 @@ export function ReservationManager() {
     };
 
     if (editing && draft.id) {
-      updateReservation(draft.id, payload);
+      const result = await updateReservation(draft.id, payload);
+      if (!result.ok) return;
       toast.success(t.admin.saved);
     } else {
-      addReservation(payload);
+      const result = await addReservation(payload);
+      if (!result.ok) return;
       toast.success(t.admin.created);
     }
     setOpen(false);
@@ -633,8 +635,10 @@ export function ReservationManager() {
             </Button>
             <Button
               variant="danger"
-              onClick={() => {
-                if (deleteId) deleteReservation(deleteId);
+              onClick={async () => {
+                if (!deleteId) return;
+                const result = await deleteReservation(deleteId);
+                if (!result.ok) return;
                 setDeleteId(null);
                 toast.success(t.admin.deleted);
               }}

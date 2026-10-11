@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import EmptyState from '@/components/shared/empty-state';
+import CatalogPersistenceState from '@/components/shared/catalog-persistence-state';
 import CarCard from './car-card';
 
 const CATEGORIES: VehicleCategory[] = ['economique', 'berline', 'suv', 'luxe', 'utilitaire'];
@@ -32,7 +33,7 @@ const SORTS: SortOption[] = ['relevance', 'price-asc', 'price-desc', 'newest'];
 
 export function CarCatalog() {
   const { t } = useI18n();
-  const { vehicles } = useDemoStore();
+  const { vehicles, persistenceMode } = useDemoStore();
   const [filters, setFilters] = useState<VehicleFilters>(DEFAULT_VEHICLE_FILTERS);
   const [sort, setSort] = useState<SortOption>('relevance');
 
@@ -52,6 +53,10 @@ export function CarCatalog() {
     filters.transmission !== 'all' ||
     filters.seats > 0 ||
     filters.availableOnly;
+
+  if (persistenceMode === 'loading' || persistenceMode === 'unavailable') {
+    return <CatalogPersistenceState />;
+  }
 
   return (
     <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
