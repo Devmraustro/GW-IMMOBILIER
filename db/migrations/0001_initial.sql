@@ -43,9 +43,21 @@ ALTER TABLE gwi_reservations
   ADD COLUMN IF NOT EXISTS reservation_kind TEXT
     GENERATED ALWAYS AS (payload->>'kind') STORED,
   ADD COLUMN IF NOT EXISTS start_date DATE
-    GENERATED ALWAYS AS ((payload->>'startDate')::date) STORED,
+    GENERATED ALWAYS AS (
+      make_date(
+        substring(payload->>'startDate' from 1 for 4)::INTEGER,
+        substring(payload->>'startDate' from 6 for 2)::INTEGER,
+        substring(payload->>'startDate' from 9 for 2)::INTEGER
+      )
+    ) STORED,
   ADD COLUMN IF NOT EXISTS end_date DATE
-    GENERATED ALWAYS AS ((payload->>'endDate')::date) STORED,
+    GENERATED ALWAYS AS (
+      make_date(
+        substring(payload->>'endDate' from 1 for 4)::INTEGER,
+        substring(payload->>'endDate' from 6 for 2)::INTEGER,
+        substring(payload->>'endDate' from 9 for 2)::INTEGER
+      )
+    ) STORED,
   ADD COLUMN IF NOT EXISTS reservation_status TEXT
     GENERATED ALWAYS AS (payload->>'status') STORED;
 
