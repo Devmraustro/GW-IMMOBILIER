@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
+import { isValidEmail, isValidPhone } from '@/lib/validation';
 import { DatabaseNotConfiguredError } from '@/lib/server/record-repository';
 import {
   consumePublicInquiryAttempt,
@@ -125,13 +126,22 @@ export async function POST(request: NextRequest) {
     ? fields.endDate.trim()
     : undefined;
   if (
+    fullName.length < 2 ||
     fullName.length > 160 ||
     phone.length > 80 ||
+    message.length < 10 ||
     message.length > 5000 ||
     (email !== undefined && email.length > 320) ||
+    (email !== undefined && !isValidEmail(email)) ||
+    !isValidPhone(phone) ||
     (propertyId !== undefined && propertyId.length > 160) ||
     (vehicleId !== undefined && vehicleId.length > 160)
-  ) return errorResponse('FIELD_TOO_LONG', 400);
+  ) return errorResponse('INVALID_CONTACT_DETAILS', 400);
+
+  const todayUtc = new Date().toISOString().slice(0, 10);
+  if (startDate && startDate < todayUtc) {
+    return errorResponse('DATE_IN_PAST', 400);
+  }
 
   if (
     (type === 'property' && (!propertyId || vehicleId !== undefined)) ||
