@@ -49,7 +49,7 @@ ALTER TABLE gwi_reservations
   ADD COLUMN IF NOT EXISTS reservation_status TEXT
     GENERATED ALWAYS AS (payload->>'status') STORED;
 
-DO $
+DO $$
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint
@@ -83,7 +83,7 @@ BEGIN
       )
       WHERE (reservation_status <> 'cancelled');
   END IF;
-END $;
+END $$;
 
 CREATE TABLE IF NOT EXISTS gwi_admin_login_attempts (
   key_hash TEXT PRIMARY KEY CHECK (length(key_hash) = 64),
