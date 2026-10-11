@@ -34,15 +34,10 @@ export function InquiryForm({ property, vehicle, requireDates, className }: Inqu
   const messagePlaceholder = property
     ? t.inquiry.messagePropertyPlaceholder
     : t.inquiry.messageVehiclePlaceholder;
-  const [message, setMessage] = useState(messagePlaceholder);
-  // Once the visitor has typed something we must never overwrite it, but a
-  // language switch should still translate the untouched default text.
-  const [messageEdited, setMessageEdited] = useState(false);
-
-  useEffect(() => {
-    if (!messageEdited) setMessage(messagePlaceholder);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locale]);
+  // The untouched default follows the active language. Once edited,
+  // preserve the user's draft across language changes.
+  const [messageDraft, setMessageDraft] = useState<string | null>(null);
+  const message = messageDraft ?? messagePlaceholder;
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -127,9 +122,7 @@ export function InquiryForm({ property, vehicle, requireDates, className }: Inqu
     setEmail('');
     setStartDate('');
     setEndDate('');
-    setMessage(
-      property ? t.inquiry.messagePropertyPlaceholder : t.inquiry.messageVehiclePlaceholder,
-    );
+    setMessageDraft(null);
     setErrors({});
   };
 
@@ -274,10 +267,7 @@ export function InquiryForm({ property, vehicle, requireDates, className }: Inqu
           <Textarea
             id="inq-message"
             value={message}
-            onChange={(event) => {
-              setMessageEdited(true);
-              setMessage(event.target.value);
-            }}
+            onChange={(event) => setMessageDraft(event.target.value)}
             aria-invalid={Boolean(errors.message)}
             className="mt-1.5"
           />
