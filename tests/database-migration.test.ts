@@ -31,6 +31,9 @@ describe('PostgreSQL initial migration', () => {
 
   it('prevents overlapping non-cancelled reservations at database level', () => {
     expect(migration).toContain('CREATE EXTENSION IF NOT EXISTS btree_gist');
+    expect(migration).toContain('make_date(');
+    expect(migration).not.toContain("(payload->>'startDate')::date");
+    expect(migration).not.toContain("(payload->>'endDate')::date");
     expect(migration).toContain('CONSTRAINT gwi_reservations_valid_range');
     expect(migration).toContain('CONSTRAINT gwi_reservations_no_overlap');
     expect(migration).toContain("daterange(start_date, end_date, '[)') WITH &&");
