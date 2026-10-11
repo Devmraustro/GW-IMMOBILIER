@@ -135,12 +135,11 @@ export async function deleteAdminRecord(
     WITH deleted AS (
       DELETE FROM ${table}
       WHERE id = ${id}
-      RETURNING id, payload
+      RETURNING id
     ), logged AS (
       INSERT INTO gwi_admin_audit_events
         (actor_email, action, entity_type, entity_id, metadata)
-      SELECT ${actorEmail}, 'delete', ${type}, deleted.id,
-             jsonb_build_object('record', deleted.payload)
+      SELECT ${actorEmail}, 'delete', ${type}, deleted.id, '{}'::jsonb
       FROM deleted
       RETURNING id
     )
