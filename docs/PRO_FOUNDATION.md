@@ -39,7 +39,7 @@ A dedicated Neon project named `gw-immobilier-prod` has been provisioned in AWS 
 2. **Complete:** `DATABASE_URL` is set as a sensitive Vercel environment variable for Production and Preview; its value is not stored in the repository.
 3. **Complete:** `db/migrations/0001_initial.sql` has been applied, and live-database schema and reservation-constraint smoke checks passed.
 4. **Configured, but strengthen before release:** `ADMIN_EMAIL` and `ADMIN_PASSWORD` are set in Vercel as sensitive variables for Production and Preview. The currently supplied password is predictable because it uses the project context and year; replace it with a unique randomly generated password before opening public production access. `ADMIN_SESSION_SECRET` is also configured as a sensitive Vercel variable. Never send passwords or secrets in chat or commit them.
-5. **Required after credentials are configured:** in a protected preview, test login, unauthorized access, listing/vehicle CRUD, public inquiry submission, rate limits, audit entries and reservation conflict handling against the real database.
+5. **Required after deployment access is authorized:** in a protected QA deployment, test login, unauthorized access, listing/vehicle CRUD, public inquiry submission, rate limits, audit entries and reservation conflict handling against the real database.
 
 ## API contract
 
@@ -60,7 +60,8 @@ All responses are private/no-store. The database uses JSONB payloads shaped like
 
 ## Remaining work before customer production
 
-- Neon and its schema are now provisioned, and `DATABASE_URL` is configured in Vercel as a sensitive variable. The administrator variables are now configured as sensitive Vercel values. The current password should be replaced with a unique random password before release. The Vercel project remains blocked and live end-to-end tests have not yet been run through an available deployment. The latest Vercel deployment remains blocked; no public customer release has been enabled.
+- Neon and its schema are provisioned, and `DATABASE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `ADMIN_SESSION_SECRET` are configured as sensitive variables in the original Vercel project. The current password should be replaced with a unique random password before release. The original `gw-immobilier` project remains blocked and its existing domains have not been reopened.
+- A separate `gw-immobilier-qa` Vercel project has been created for testing. Vercel Authentication is enabled for all deployments, and no custom domains are attached. A deployment of the development branch reached `READY`. However, the current Vercel integration cannot authorize a protection-bypass request for this newly created project, so its live HTTP endpoints have not yet been tested. Update/reauthorize Vercel access for the QA project, or use an owner-authorized Vercel session/CLI, before the live end-to-end gate.
 - Latest complete CI on the current implementation passed: TypeScript, ESLint, 130 unit tests, production build, PostgreSQL migration applied twice (idempotency), and a real PostgreSQL smoke test for overlap, adjacent dates, cancelled reservations and resource kind.
 - The latest npm audit on that CI commit reported zero vulnerabilities (0 critical, 0 high, 0 moderate). The workflow now fails if `npm audit --audit-level=moderate` detects an unresolved vulnerability.
 - Add private object storage for uploaded property/vehicle media, database backup/restore validation, and production monitoring.
@@ -74,6 +75,6 @@ Do not merge to `main`, deploy to public customer domains or unpause Vercel unti
 
 - TypeScript, ESLint, unit tests and production build pass on the exact final commit.
 - The strict npm audit gate passes on the exact final commit.
-- The sensitive `DATABASE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `ADMIN_SESSION_SECRET` variables are configured for Production and Preview, and the migration is applied. Replace the predictable administrator password and pass protected-preview end-to-end tests before release.
+- The sensitive `DATABASE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `ADMIN_SESSION_SECRET` variables are configured for Production and Preview, and the migration is applied. Replace the predictable administrator password, ensure access to the protected QA deployment, and pass the live end-to-end tests before release.
 - Real-database smoke tests pass for login, unauthorized requests, catalog publication, CRUD, audit, rate limiting, amount/deposit constraints, and overlapping reservation rejection.
 - Contact details are verified, and no demo data or demo mode is exposed to customers.
