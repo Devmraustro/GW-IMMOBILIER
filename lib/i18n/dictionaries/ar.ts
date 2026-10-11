@@ -406,6 +406,8 @@ export const ar: Dictionary = {
     whatsappSubmit: 'إرسال عبر واتساب',
     successTitle: 'تم تسجيل الطلب',
     successText: 'تم إرسال طلبك إلى الوكالة. سنرد عليك في أقرب وقت ممكن.',
+    demoSuccessTitle: 'تم حفظ الطلب محليًا',
+    demoSuccessText: 'وضع العرض التجريبي: بقي هذا النموذج محفوظًا في هذا المتصفح ولم يُرسل إلى الوكالة.',
     submitFailed: 'تعذر إرسال طلبك. أعد المحاولة بعد بضع دقائق.',
     whatsappSuccessTitle: 'تم فتح واتساب',
     whatsappSuccessText: 'تم فتح رسالتك الجاهزة في واتساب.',
