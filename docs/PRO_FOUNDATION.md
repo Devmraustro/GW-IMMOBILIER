@@ -14,7 +14,7 @@ This document describes the current development branch, `pro/phase-1-foundation`
 - Public inquiry submissions at `POST /api/inquiries`. The handler validates same-origin JSON, enforces a small body limit and accepted field list, checks published listing references, validates the inquiry domain model, rate-limits submissions by IP, and saves the lead in PostgreSQL. It does not send e-mail or SMS notifications.
 - The store adapter loads public listings and admin records through those APIs when live/database mode is enabled. It fails closed: if the database cannot be reached, it shows an unavailable state and does not fall back to seed records.
 - French and Arabic copy for database loading/errors and form failures.
-- Unit tests for session tokens, record validation and public inquiry domain validation.
+- Unit tests for session tokens, record validation, public inquiry domain validation, PostgreSQL migration structure and reservation invariants.
 
 ## Environment configuration
 
@@ -60,9 +60,9 @@ All responses are private/no-store. The database uses JSONB payloads shaped like
 
 ## Remaining work before customer production
 
-- The real database, private variables and migration still need to be provisioned and tested; the current hosted Vercel project remains paused/blocked.
-- Latest CI must pass on the final branch head. The most recent complete baseline passed before the current public persistence and framework/security changes, so it does not validate those later changes.
-- The dependency audit still reported nine vulnerabilities (seven high, two moderate) after the compatible dependency refresh. Review/remediate these before release; Tailwind v3's transitive dependency tree remains the main outstanding issue.
+- The real Neon database and private environment variables still need to be provisioned; the current hosted Vercel project remains paused/blocked. The SQL migration has been tested in a temporary PostgreSQL 17 CI service, but has not been applied to a live customer database.
+- Latest complete CI on the current implementation passed: TypeScript, ESLint, 130 unit tests, production build, PostgreSQL migration applied twice (idempotency), and a real PostgreSQL smoke test for overlap, adjacent dates, cancelled reservations and resource kind.
+- The latest npm audit on that CI commit reported zero vulnerabilities (0 critical, 0 high, 0 moderate). The workflow now fails if `npm audit --audit-level=moderate` detects an unresolved vulnerability.
 - Add private object storage for uploaded property/vehicle media, database backup/restore validation, and production monitoring.
 - Validate public catalog rendering/detail metadata with a real database; enable customer form notifications if the business requires them.
 - Replace placeholder contact information with owner-verified details.
@@ -73,7 +73,7 @@ All responses are private/no-store. The database uses JSONB payloads shaped like
 Do not merge to `main`, deploy to public customer domains or unpause Vercel until all of the following are true:
 
 - TypeScript, ESLint, unit tests and production build pass on the exact final commit.
-- The remaining dependency vulnerabilities have been remediated or explicitly accepted based on documented risk.
+- The strict npm audit gate passes on the exact final commit.
 - Private database/admin environment variables are configured and the migration is applied.
-- Real-database smoke tests pass for login, unauthorized requests, catalog publication, CRUD, audit, rate limiting, and overlapping reservation rejection.
+- Real-database smoke tests pass for login, unauthorized requests, catalog publication, CRUD, audit, rate limiting, amount/deposit constraints, and overlapping reservation rejection.
 - Contact details are verified, and no demo data or demo mode is exposed to customers.
