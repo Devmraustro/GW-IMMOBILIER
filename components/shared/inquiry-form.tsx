@@ -26,7 +26,7 @@ interface InquiryFormProps {
 
 export function InquiryForm({ property, vehicle, requireDates, className }: InquiryFormProps) {
   const { t, tpl, locale } = useI18n();
-  const { addInquiry } = useDemoStore();
+  const { submitInquiry } = useDemoStore();
 
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -82,24 +82,27 @@ export function InquiryForm({ property, vehicle, requireDates, className }: Inqu
     }
 
     setSending(true);
-    // Demo flow: stored locally, no backend call is made.
-    await new Promise((resolve) => setTimeout(resolve, 450));
-    addInquiry({
-      type: property ? 'property' : vehicle ? 'vehicle' : 'general',
-      status: 'new',
-      channel: 'form',
-      fullName: fullName.trim(),
-      phone: phone.trim(),
-      email: email.trim() || undefined,
-      message: message.trim(),
-      propertyId: property?.id,
-      vehicleId: vehicle?.id,
-      startDate: startDate || undefined,
-      endDate: endDate || undefined,
-    });
-    setSending(false);
-    setSubmitted(true);
-    toast.success(t.inquiry.successTitle, { description: t.inquiry.successText });
+    try {
+      await submitInquiry({
+        type: property ? 'property' : vehicle ? 'vehicle' : 'general',
+        status: 'new',
+        channel: 'form',
+        fullName: fullName.trim(),
+        phone: phone.trim(),
+        email: email.trim() || undefined,
+        message: message.trim(),
+        propertyId: property?.id,
+        vehicleId: vehicle?.id,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+      });
+      setSubmitted(true);
+      toast.success(t.inquiry.successTitle, { description: t.inquiry.successText });
+    } catch {
+      toast.error(t.inquiry.submitFailed);
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleWhatsApp = () => {
