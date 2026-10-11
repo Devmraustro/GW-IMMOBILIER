@@ -225,7 +225,7 @@ renders a broken-image icon and never breaks the layout, even fully offline.
 
 ## Administration dashboard
 
-- `/admin` is protected by a signed, HttpOnly session cookie and private server-side credentials. The route remains excluded from `robots.txt` and the sitemap.
+- `/admin` is protected by a signed, HttpOnly session cookie and private server-side credentials. Admin records are loaded and mutated through the protected PostgreSQL API; the dashboard refuses to show records if the database cannot be reached. The route remains excluded from `robots.txt` and the sitemap.
 - Every KPI is derived from the current store, never hardcoded.
 - **Double-booking detection is real logic** (`lib/availability.ts`, unit
   tested): ranges are half-open — a stay ending on the 10th frees the listing
@@ -239,7 +239,7 @@ renders a broken-image icon and never breaks the layout, even fully offline.
 
 Be explicit about these when presenting the prototype:
 
-1. **No shared database yet.** The admin area and `/api/admin/*` routes are gated by a signed, HttpOnly, SameSite session. A single administrator is configured through private server environment variables. However, listings, inquiries and reservations still persist in browser `localStorage`; they are not shared across devices, so this is not yet a live operational system.
+1. **Live backend setup is not complete.** The admin area and `/api/admin/*` routes are gated by a signed, HttpOnly, SameSite session. The admin store now requests business records from the protected PostgreSQL API and does not fall back to local demo data. The database URL and admin credentials have not been provisioned in the hosted environment, so the protected dashboard stays unavailable until those private settings and the migration are applied.
 2. **Persistence is `localStorage` only.** Changes are private to one browser
    on one device; clearing site data resets everything.
 3. **Forms do not send e-mail or messages.** Form submissions are stored
