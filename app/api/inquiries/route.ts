@@ -84,6 +84,13 @@ export async function POST(request: NextRequest) {
   }
 
   const fields = body as Record<string, unknown>;
+  const acceptedFields = new Set([
+    'type', 'fullName', 'phone', 'email', 'message',
+    'propertyId', 'vehicleId', 'startDate', 'endDate',
+  ]);
+  if (Object.keys(fields).some((key) => !acceptedFields.has(key))) {
+    return errorResponse('UNSUPPORTED_FIELD', 400);
+  }
   const type = fields.type;
   if (type !== 'property' && type !== 'vehicle' && type !== 'general') {
     return errorResponse('INVALID_INQUIRY_TYPE', 400);
@@ -92,7 +99,23 @@ export async function POST(request: NextRequest) {
   const fullName = typeof fields.fullName === 'string' ? fields.fullName.trim() : '';
   const phone = typeof fields.phone === 'string' ? fields.phone.trim() : '';
   const message = typeof fields.message === 'string' ? fields.message.trim() : '';
-  const email = typeof fields.email === 'string' ? fields.email.trim() : undefined;
+  if (fields.email !== undefined && typeof fields.email !== 'string') {
+    return errorResponse('INVALID_EMAIL', 400);
+  }
+  if (fields.propertyId !== undefined && typeof fields.propertyId !== 'string') {
+    return errorResponse('INVALID_LISTING_REFERENCE', 400);
+  }
+  if (fields.vehicleId !== undefined && typeof fields.vehicleId !== 'string') {
+    return errorResponse('INVALID_LISTING_REFERENCE', 400);
+  }
+  if (fields.startDate !== undefined && typeof fields.startDate !== 'string') {
+    return errorResponse('INVALID_DATE_RANGE', 400);
+  }
+  if (fields.endDate !== undefined && typeof fields.endDate !== 'string') {
+    return errorResponse('INVALID_DATE_RANGE', 400);
+  }
+
+  const email = typeof fields.email === 'string' ? fields.email.trim() || undefined : undefined;
   const propertyId = typeof fields.propertyId === 'string' ? fields.propertyId.trim() : undefined;
   const vehicleId = typeof fields.vehicleId === 'string' ? fields.vehicleId.trim() : undefined;
   const startDate = typeof fields.startDate === 'string' && fields.startDate.trim()
@@ -101,10 +124,6 @@ export async function POST(request: NextRequest) {
   const endDate = typeof fields.endDate === 'string' && fields.endDate.trim()
     ? fields.endDate.trim()
     : undefined;
-
-  if (email !== undefined && !email) {
-    // An empty optional e-mail is normalized to absence, as it is in the UI.
-  }
   if (
     fullName.length > 160 ||
     phone.length > 80 ||
