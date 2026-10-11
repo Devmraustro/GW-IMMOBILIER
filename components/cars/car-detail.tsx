@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -56,17 +56,12 @@ export function CarDetail({ slug }: { slug: string }) {
   const { t, pick, locale } = useI18n();
   const { vehicles, hydrated, persistenceMode } = useDemoStore();
   const vehicle = useMemo(() => vehicles.find((v) => v.slug === slug), [vehicles, slug]);
-  const [missing, setMissing] = useState(false);
   const mapRef = useRef<null | import('leaflet').Map>(null);
-
-  useEffect(() => {
-    if (
-      hydrated &&
-      persistenceMode !== 'loading' &&
-      persistenceMode !== 'unavailable' &&
-      !vehicle
-    ) setMissing(true);
-  }, [hydrated, persistenceMode, vehicle]);
+  const missing =
+    hydrated &&
+    persistenceMode !== 'loading' &&
+    persistenceMode !== 'unavailable' &&
+    !vehicle;
 
   if (missing) {
     return (
