@@ -60,8 +60,13 @@ export function CarDetail({ slug }: { slug: string }) {
   const mapRef = useRef<null | import('leaflet').Map>(null);
 
   useEffect(() => {
-    if (hydrated && !vehicle) setMissing(true);
-  }, [hydrated, vehicle]);
+    if (
+      hydrated &&
+      persistenceMode !== 'loading' &&
+      persistenceMode !== 'unavailable' &&
+      !vehicle
+    ) setMissing(true);
+  }, [hydrated, persistenceMode, vehicle]);
 
   if (missing) {
     return (
