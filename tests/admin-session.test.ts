@@ -28,7 +28,8 @@ describe('admin session tokens', () => {
     expect(claims).not.toBeNull();
     expect(claims?.sub).toBe('owner@example.com');
     expect(claims?.role).toBe('admin');
-    expect(claims?.exp! - claims?.iat!).toBe(ADMIN_SESSION_TTL_SECONDS);
+    if (!claims) throw new Error('Expected a valid administrator session');
+    expect(claims.exp - claims.iat).toBe(ADMIN_SESSION_TTL_SECONDS);
   });
 
   it('rejects a tampered signature', async () => {
