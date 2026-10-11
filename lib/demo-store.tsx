@@ -10,7 +10,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
 import type { Inquiry, Property, Reservation, Vehicle } from '@/types';
@@ -89,6 +89,7 @@ const DemoStoreContext = createContext<DemoStore | null>(null);
 
 export function DemoStoreProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const adminMode = pathname.startsWith('/admin') && pathname !== '/admin/login';
   const publicCatalogMode =
     process.env.NEXT_PUBLIC_CATALOG_MODE === 'database' ||
@@ -117,6 +118,8 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     if (!adminMode && publicCatalogMode) {
+      // Route/mode change must clear the old collection before asynchronous loading.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHydrated(false);
       setPersistenceMode('loading');
       setProperties([]);
@@ -192,7 +195,7 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
           })),
         );
         if (responses.some((response) => response.status === 401)) {
-          window.location.assign('/admin/login');
+          router.replace('/admin/login');
           return;
         }
         if (responses.some((response) => !response.ok)) {
@@ -223,7 +226,7 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
     }
     void loadAdminRecords();
     return () => { cancelled = true; };
-  }, [adminMode, publicCatalogMode]);
+  }, [adminMode, publicCatalogMode, router]);
 
   useEffect(() => {
     if (firstRender.current || !hydrated || adminMode || persistenceMode !== 'demo') return;
@@ -283,7 +286,7 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
           body: JSON.stringify(body),
         });
         if (response.status === 401) {
-          window.location.assign('/admin/login');
+          router.replace('/admin/login');
           return { ok: false };
         }
         if (!response.ok) throw new Error('Admin record request failed');
@@ -294,7 +297,7 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
         return { ok: false };
       }
     },
-    [adminMode, persistenceMode, failAdminPersistence],
+    [adminMode, persistenceMode, failAdminPersistence, router],
   );
 
   const addProperty: DemoStore['addProperty'] = useCallback((input) => {
