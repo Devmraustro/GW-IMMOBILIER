@@ -456,6 +456,7 @@ export const fr = {
     databaseUnavailable: 'Base de données indisponible',
     databaseUnavailableDescription: 'Le tableau de bord est bloqué afin d’éviter de travailler sur des données de démonstration ou de laisser croire que les modifications sont enregistrées.',
     databaseSaveFailed: 'Enregistrement impossible. La connexion à la base a échoué ; rechargez la page après vérification de la configuration.',
+    recordSaveRejected: 'Enregistrement refusé. Vérifiez les champs saisis puis réessayez.',
     logout: 'Déconnexion',
     demoBanner:
       'Mode démonstration : les données sont enregistrées localement dans votre navigateur. Aucune authentification ni base de données n’est active.',
