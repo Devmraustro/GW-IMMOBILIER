@@ -246,7 +246,8 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
     };
     setProperties((prev) => [created, ...prev]);
     if (adminMode) {
-      void persistAdminMutation('POST', { type: 'properties', record: created }).then((result) => {
+      const { id: _localId, createdAt: _localCreatedAt, ...record } = created;
+      void persistAdminMutation('POST', { type: 'properties', record }).then((result) => {
         if (result.ok && result.record) setProperties((prev) => prev.map((item) =>
           item.id === created.id ? (result.record as unknown as Property) : item,
         ));
@@ -289,7 +290,8 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
     };
     setVehicles((prev) => [created, ...prev]);
     if (adminMode) {
-      void persistAdminMutation('POST', { type: 'vehicles', record: created }).then((result) => {
+      const { id: _localId, createdAt: _localCreatedAt, ...record } = created;
+      void persistAdminMutation('POST', { type: 'vehicles', record }).then((result) => {
         if (result.ok && result.record) setVehicles((prev) => prev.map((item) =>
           item.id === created.id ? (result.record as unknown as Vehicle) : item,
         ));
@@ -327,7 +329,8 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
     };
     setInquiries((prev) => [created, ...prev]);
     if (adminMode) {
-      void persistAdminMutation('POST', { type: 'inquiries', record: created }).then((result) => {
+      const { id: _localId, createdAt: _localCreatedAt, ...record } = created;
+      void persistAdminMutation('POST', { type: 'inquiries', record }).then((result) => {
         if (result.ok && result.record) setInquiries((prev) => prev.map((item) =>
           item.id === created.id ? (result.record as unknown as Inquiry) : item,
         ));
@@ -360,7 +363,8 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
     };
     setReservations((prev) => [created, ...prev]);
     if (adminMode) {
-      void persistAdminMutation('POST', { type: 'reservations', record: created }).then((result) => {
+      const { id: _localId, createdAt: _localCreatedAt, ...record } = created;
+      void persistAdminMutation('POST', { type: 'reservations', record }).then((result) => {
         if (result.ok && result.record) setReservations((prev) => prev.map((item) =>
           item.id === created.id ? (result.record as unknown as Reservation) : item,
         ));
