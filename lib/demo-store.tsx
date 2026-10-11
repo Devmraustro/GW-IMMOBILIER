@@ -425,16 +425,8 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
       createdAt: new Date().toISOString(),
     };
     setInquiries((prev) => [created, ...prev]);
-    if (adminMode) {
-      const { id: _localId, createdAt: _localCreatedAt, ...record } = created;
-      void persistAdminMutation('POST', { type: 'inquiries', record }).then((result) => {
-        if (result.ok && result.record) setInquiries((prev) => prev.map((item) =>
-          item.id === created.id ? (result.record as unknown as Inquiry) : item,
-        ));
-      });
-    }
     return created;
-  }, [adminMode, persistAdminMutation]);
+  }, []);
 
   const submitInquiry: DemoStore['submitInquiry'] = useCallback(
     async (input) => {
