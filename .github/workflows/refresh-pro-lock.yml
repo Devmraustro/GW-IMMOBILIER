@@ -27,6 +27,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Refresh branch snapshot
+        shell: bash
+        run: |
+          git fetch origin "${GITHUB_REF_NAME}"
+          git reset --hard "origin/${GITHUB_REF_NAME}"
       - name: Regenerate lockfile and apply compatible audit fixes
         run: |
           npm install --package-lock-only --ignore-scripts --no-audit --no-fund
