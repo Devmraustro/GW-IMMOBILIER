@@ -96,6 +96,7 @@ function handleStorageError(error: unknown) {
       ? String((error as { code?: unknown }).code)
       : '';
   if (code === '23505') return jsonError('RECORD_ALREADY_EXISTS', 409);
+  if (code === '23P01') return jsonError('RESERVATION_DATE_CONFLICT', 409);
   if (code === '22P02' || code === '22023') return jsonError('INVALID_RECORD', 400);
 
   // Keep database exception details (and connection strings) out of the HTTP response.
