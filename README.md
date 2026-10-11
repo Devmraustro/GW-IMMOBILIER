@@ -9,7 +9,7 @@ fleet, an **interactive Leaflet/OpenStreetMap map with marker clustering**,
 Google-Maps itinerary links, WhatsApp inquiry flows, and a fully interactive
 **demonstration administration dashboard**.
 
-> ⚠️ **Pro development in progress.** The administration route now has a protected sign-in boundary based on private server environment credentials. The catalog still uses fictional seed data and the dashboard records are still stored in each browser; shared database-backed operations are not yet implemented. Contact details remain placeholders until the owner supplies verified ones. See [Demo-mode limitations](#demo-mode-limitations) and [Pro foundation status](docs/PRO_FOUNDATION.md).
+> ⚠️ **Pro release is not yet enabled.** The branch now includes protected administrator access, PostgreSQL CRUD, a public catalogue API that returns only published (non-demo) records, and server-side inquiry submission. Production defaults to database mode and will not display seeded listings if the database is unavailable. The database and private credentials have not yet been provisioned in the hosted environment, and the public domain remains paused. Contact details must still be verified by the owner. See [Pro foundation status](docs/PRO_FOUNDATION.md).
 
 ---
 
@@ -38,7 +38,7 @@ Google-Maps itinerary links, WhatsApp inquiry flows, and a fully interactive
 
 ## What the project does
 
-> Pro implementation status: the admin sign-in boundary is the first delivery. Shared database persistence, staff accounts/roles, and server-side data CRUD are still pending. See [docs/PRO_FOUNDATION.md](docs/PRO_FOUNDATION.md).
+> Pro implementation status: the administration store uses the protected PostgreSQL API; public catalog requests use `/api/catalog`; and customer form submissions use the rate-limited `/api/inquiries` endpoint. Live database provisioning, public deployment verification, image storage and staff roles remain release blockers. See [docs/PRO_FOUNDATION.md](docs/PRO_FOUNDATION.md).
 
 **For customers**
 
@@ -239,12 +239,9 @@ renders a broken-image icon and never breaks the layout, even fully offline.
 
 Be explicit about these when presenting the prototype:
 
-1. **Live backend setup is not complete.** The admin area and `/api/admin/*` routes are gated by a signed, HttpOnly, SameSite session. The admin store now requests business records from the protected PostgreSQL API and does not fall back to local demo data. The database URL and admin credentials have not been provisioned in the hosted environment, so the protected dashboard stays unavailable until those private settings and the migration are applied.
-2. **Persistence is `localStorage` only.** Changes are private to one browser
-   on one device; clearing site data resets everything.
-3. **Forms do not send e-mail or messages.** Form submissions are stored
-   locally and appear in the dashboard. WhatsApp actions open `wa.me` with a
-   pre-filled message that the customer reviews and sends themselves.
+1. **Live backend setup is not complete.** The admin area and `/api/admin/*` routes are gated by a signed, HttpOnly, SameSite session. The admin store loads business records from PostgreSQL; the public catalog only returns records whose server-managed `isDemo` flag is false; and inquiry forms use a same-origin, rate-limited server endpoint. The database URL and admin credentials have not been provisioned in the hosted environment, so the catalog and protected dashboard remain unavailable until the private settings and migration are applied.
+2. **Local persistence is only for the explicit demo mode.** In development, or when `NEXT_PUBLIC_CATALOG_MODE=demo` is explicitly set, demo edits remain private to one browser. Production defaults to database mode unless an explicit demo override is configured; never use that override for a customer-facing deployment.
+3. **Form notifications are not configured.** In database mode, public form submissions are validated and saved to PostgreSQL for the admin dashboard, but no e-mail/SMS notification is sent. WhatsApp actions open `wa.me` with a pre-filled message that the customer reviews and sends themselves.
 4. **No payments.** The finance board is an operational view, not accounting.
 5. **No guaranteed booking.** Reservations made in the dashboard are calendar
    entries; there is no contract, payment or confirmation e-mail step.
