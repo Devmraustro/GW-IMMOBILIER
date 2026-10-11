@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
 import { propertyTypeLabel } from '@/lib/labels';
 import { useDemoStore } from '@/lib/demo-store';
+import CatalogPersistenceState from '@/components/shared/catalog-persistence-state';
 import { buildPropertyMessage, whatsappUrl } from '@/lib/whatsapp';
 import { formatCurrency, formatDate, formatSurface } from '@/lib/format';
 import { getArea } from '@/data/areas';
@@ -48,7 +49,7 @@ const STATUS_VARIANT = {
 
 export function PropertyDetail({ slug }: { slug: string }) {
   const { t, pick, locale } = useI18n();
-  const { properties, hydrated, isFavorite, toggleFavorite } = useDemoStore();
+  const { properties, hydrated, persistenceMode, isFavorite, toggleFavorite } = useDemoStore();
   const property = useMemo(() => properties.find((p) => p.slug === slug), [properties, slug]);
   const [shareError, setShareError] = useState(false);
   const [missing, setMissing] = useState(false);
@@ -71,6 +72,14 @@ export function PropertyDetail({ slug }: { slug: string }) {
             </Button>
           }
         />
+      </div>
+    );
+  }
+
+  if (persistenceMode === 'loading' || persistenceMode === 'unavailable') {
+    return (
+      <div className="container-page py-16">
+        <CatalogPersistenceState />
       </div>
     );
   }
