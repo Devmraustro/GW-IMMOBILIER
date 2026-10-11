@@ -62,6 +62,7 @@ BEGIN
         item_id IS NOT NULL AND
         reservation_kind IN ('property', 'vehicle') AND
         reservation_status IN ('upcoming', 'ongoing', 'completed', 'cancelled') AND
+        start_date IS NOT NULL AND end_date IS NOT NULL AND
         start_date < end_date
       );
   END IF;
@@ -91,6 +92,16 @@ CREATE TABLE IF NOT EXISTS gwi_admin_login_attempts (
 
 CREATE INDEX IF NOT EXISTS gwi_admin_login_attempts_updated_idx
   ON gwi_admin_login_attempts (updated_at);
+
+CREATE TABLE IF NOT EXISTS gwi_public_inquiry_attempts (
+  key_hash TEXT PRIMARY KEY CHECK (length(key_hash) = 64),
+  attempts INTEGER NOT NULL DEFAULT 1 CHECK (attempts > 0),
+  window_started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS gwi_public_inquiry_attempts_updated_idx
+  ON gwi_public_inquiry_attempts (updated_at);
 
 CREATE TABLE IF NOT EXISTS gwi_admin_audit_events (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
