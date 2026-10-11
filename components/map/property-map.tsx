@@ -148,7 +148,10 @@ function ClusteredMarkers({
   const map = useMap();
   const groupRef = useRef<L.MarkerClusterGroup | null>(null);
   const selectRef = useRef(onSelect);
-  selectRef.current = onSelect;
+
+  useEffect(() => {
+    selectRef.current = onSelect;
+  }, [onSelect]);
 
   useEffect(() => {
     const group = L.markerClusterGroup({
