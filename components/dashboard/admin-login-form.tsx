@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import { useI18n } from '@/lib/i18n';
 
 export function AdminLoginForm() {
   const { t } = useI18n();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -41,7 +43,7 @@ export function AdminLoginForm() {
       const next = query.get('next');
       const destination =
         next && next.startsWith('/admin/') && !next.startsWith('//') ? next : '/admin';
-      window.location.assign(destination);
+      router.replace(destination);
     } catch {
       setError(t.admin.authError);
     } finally {
