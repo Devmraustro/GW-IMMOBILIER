@@ -33,6 +33,16 @@ CREATE TABLE IF NOT EXISTS gwi_reservations (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS gwi_admin_login_attempts (
+  key_hash TEXT PRIMARY KEY CHECK (length(key_hash) = 64),
+  attempts INTEGER NOT NULL DEFAULT 1 CHECK (attempts > 0),
+  window_started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS gwi_admin_login_attempts_updated_idx
+  ON gwi_admin_login_attempts (updated_at);
+
 CREATE TABLE IF NOT EXISTS gwi_admin_audit_events (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   actor_email TEXT NOT NULL,
