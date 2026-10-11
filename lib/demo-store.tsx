@@ -58,24 +58,24 @@ export type DemoStore = {
   reservations: Reservation[];
   favorites: string[];
 
-  addProperty: (input: Omit<Property, 'id' | 'createdAt'> & { id?: string }) => Property;
-  updateProperty: (id: string, patch: Partial<Property>) => void;
-  deleteProperty: (id: string) => void;
-  togglePropertyAvailability: (id: string, status: Property['availability']['status']) => void;
+  addProperty: (input: Omit<Property, 'id' | 'createdAt'> & { id?: string }) => Promise<MutationResult>;
+  updateProperty: (id: string, patch: Partial<Property>) => Promise<MutationResult>;
+  deleteProperty: (id: string) => Promise<MutationResult>;
+  togglePropertyAvailability: (id: string, status: Property['availability']['status']) => Promise<MutationResult>;
 
-  addVehicle: (input: Omit<Vehicle, 'id' | 'createdAt'> & { id?: string }) => Vehicle;
-  updateVehicle: (id: string, patch: Partial<Vehicle>) => void;
-  deleteVehicle: (id: string) => void;
-  toggleVehicleAvailability: (id: string, available: boolean) => void;
+  addVehicle: (input: Omit<Vehicle, 'id' | 'createdAt'> & { id?: string }) => Promise<MutationResult>;
+  updateVehicle: (id: string, patch: Partial<Vehicle>) => Promise<MutationResult>;
+  deleteVehicle: (id: string) => Promise<MutationResult>;
+  toggleVehicleAvailability: (id: string, available: boolean) => Promise<MutationResult>;
 
   addInquiry: (input: Omit<Inquiry, 'id' | 'createdAt'>) => Inquiry;
   submitInquiry: (input: Omit<Inquiry, 'id' | 'createdAt'>) => Promise<Inquiry>;
-  updateInquiryStatus: (id: string, status: Inquiry['status']) => void;
-  deleteInquiry: (id: string) => void;
+  updateInquiryStatus: (id: string, status: Inquiry['status']) => Promise<MutationResult>;
+  deleteInquiry: (id: string) => Promise<MutationResult>;
 
-  addReservation: (input: Omit<Reservation, 'id' | 'createdAt'>) => Reservation;
-  updateReservation: (id: string, patch: Partial<Reservation>) => void;
-  deleteReservation: (id: string) => void;
+  addReservation: (input: Omit<Reservation, 'id' | 'createdAt'>) => Promise<MutationResult>;
+  updateReservation: (id: string, patch: Partial<Reservation>) => Promise<MutationResult>;
+  deleteReservation: (id: string) => Promise<MutationResult>;
 
   isFavorite: (id: string) => boolean;
   toggleFavorite: (id: string) => boolean;
@@ -289,94 +289,128 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
           router.replace('/admin/login');
           return { ok: false };
         }
-        if (!response.ok) throw new Error('Admin record request failed');
-        const result = (await response.json()) as { record?: Record<string, unknown> };
-        return { ok: true, record: result.record };
+        if (!response.ok) {
+          if (response.status >= 500) failAdminPersistence();
+          else toast.error(t.admin.recordSaveRejected);
+          return { ok: false };
+        }
+
+        if (method === 'DELETE') return { ok: true };
+        const result = (await response.json()) as { record?: unknown };
+        if (!result.record || typeof result.record !== 'object' || Array.isArray(result.record)) {
+          failAdminPersistence();
+          return { ok: false };
+        }
+        return { ok: true, record: result.record as Record<string, unknown> };
       } catch {
         failAdminPersistence();
         return { ok: false };
       }
     },
-    [adminMode, persistenceMode, failAdminPersistence, router],
+    [adminMode, persistenceMode, failAdminPersistence, router, t.admin.recordSaveRejected],
   );
 
-  const addProperty: DemoStore['addProperty'] = useCallback((input) => {
+  const addProperty: DemoStore['addProperty'] = useCallback(async (input) => {
     const created: Property = {
       ...input,
       id: input.id ?? `p-${Date.now().toString(36)}`,
       createdAt: new Date().toISOString(),
       isDemo: adminMode ? false : input.isDemo,
     };
-    setProperties((prev) => [created, ...prev]);
+
     if (adminMode) {
       const { id: _localId, createdAt: _localCreatedAt, ...record } = created;
-      void persistAdminMutation('POST', { type: 'properties', record }).then((result) => {
-        if (result.ok && result.record) setProperties((prev) => prev.map((item) =>
-          item.id === created.id ? (result.record as unknown as Property) : item,
-        ));
-      });
+      const result = await persistAdminMutation('POST', { type: 'properties', record });
+      if (result.ok && result.record) {
+        setProperties((prev) => [result.record as unknown as Property, ...prev]);
+      }
+      return result;
     }
-    return created;
+
+    setProperties((prev) => [created, ...prev]);
+    return { ok: true, record: created as unknown as Record<string, unknown> };
   }, [adminMode, persistAdminMutation]);
 
-  const updateProperty: DemoStore['updateProperty'] = useCallback((id, patch) => {
-    setProperties((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+  const updateProperty: DemoStore['updateProperty'] = useCallback(async (id, patch) => {
     if (adminMode) {
-      void persistAdminMutation('PATCH', { type: 'properties', id, patch }).then((result) => {
-        if (result.ok && result.record) setProperties((prev) => prev.map((item) =>
+      const result = await persistAdminMutation('PATCH', { type: 'properties', id, patch });
+      if (result.ok && result.record) {
+        setProperties((prev) => prev.map((item) =>
           item.id === id ? (result.record as unknown as Property) : item,
         ));
-      });
+      }
+      return result;
     }
+
+    setProperties((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+    return { ok: true };
   }, [adminMode, persistAdminMutation]);
 
-  const deleteProperty: DemoStore['deleteProperty'] = useCallback((id) => {
+  const deleteProperty: DemoStore['deleteProperty'] = useCallback(async (id) => {
+    if (adminMode) {
+      const result = await persistAdminMutation('DELETE', { type: 'properties', id });
+      if (result.ok) setProperties((prev) => prev.filter((p) => p.id !== id));
+      return result;
+    }
+
     setProperties((prev) => prev.filter((p) => p.id !== id));
-    if (adminMode) void persistAdminMutation('DELETE', { type: 'properties', id });
+    return { ok: true };
   }, [adminMode, persistAdminMutation]);
 
   const togglePropertyAvailability: DemoStore['togglePropertyAvailability'] = useCallback(
-    (id, status) => {
+    async (id, status) => {
       const property = properties.find((item) => item.id === id);
-      if (!property) return;
-      updateProperty(id, { availability: { ...property.availability, status } });
+      if (!property) return { ok: false };
+      return updateProperty(id, { availability: { ...property.availability, status } });
     },
     [properties, updateProperty],
   );
 
-  const addVehicle: DemoStore['addVehicle'] = useCallback((input) => {
+  const addVehicle: DemoStore['addVehicle'] = useCallback(async (input) => {
     const created: Vehicle = {
       ...input,
       id: input.id ?? `v-${Date.now().toString(36)}`,
       createdAt: new Date().toISOString(),
       isDemo: adminMode ? false : input.isDemo,
     };
-    setVehicles((prev) => [created, ...prev]);
+
     if (adminMode) {
       const { id: _localId, createdAt: _localCreatedAt, ...record } = created;
-      void persistAdminMutation('POST', { type: 'vehicles', record }).then((result) => {
-        if (result.ok && result.record) setVehicles((prev) => prev.map((item) =>
-          item.id === created.id ? (result.record as unknown as Vehicle) : item,
-        ));
-      });
+      const result = await persistAdminMutation('POST', { type: 'vehicles', record });
+      if (result.ok && result.record) {
+        setVehicles((prev) => [result.record as unknown as Vehicle, ...prev]);
+      }
+      return result;
     }
-    return created;
+
+    setVehicles((prev) => [created, ...prev]);
+    return { ok: true, record: created as unknown as Record<string, unknown> };
   }, [adminMode, persistAdminMutation]);
 
-  const updateVehicle: DemoStore['updateVehicle'] = useCallback((id, patch) => {
-    setVehicles((prev) => prev.map((v) => (v.id === id ? { ...v, ...patch } : v)));
+  const updateVehicle: DemoStore['updateVehicle'] = useCallback(async (id, patch) => {
     if (adminMode) {
-      void persistAdminMutation('PATCH', { type: 'vehicles', id, patch }).then((result) => {
-        if (result.ok && result.record) setVehicles((prev) => prev.map((item) =>
+      const result = await persistAdminMutation('PATCH', { type: 'vehicles', id, patch });
+      if (result.ok && result.record) {
+        setVehicles((prev) => prev.map((item) =>
           item.id === id ? (result.record as unknown as Vehicle) : item,
         ));
-      });
+      }
+      return result;
     }
+
+    setVehicles((prev) => prev.map((v) => (v.id === id ? { ...v, ...patch } : v)));
+    return { ok: true };
   }, [adminMode, persistAdminMutation]);
 
-  const deleteVehicle: DemoStore['deleteVehicle'] = useCallback((id) => {
+  const deleteVehicle: DemoStore['deleteVehicle'] = useCallback(async (id) => {
+    if (adminMode) {
+      const result = await persistAdminMutation('DELETE', { type: 'vehicles', id });
+      if (result.ok) setVehicles((prev) => prev.filter((v) => v.id !== id));
+      return result;
+    }
+
     setVehicles((prev) => prev.filter((v) => v.id !== id));
-    if (adminMode) void persistAdminMutation('DELETE', { type: 'vehicles', id });
+    return { ok: true };
   }, [adminMode, persistAdminMutation]);
 
   const toggleVehicleAvailability: DemoStore['toggleVehicleAvailability'] = useCallback(
@@ -404,7 +438,8 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
 
   const submitInquiry: DemoStore['submitInquiry'] = useCallback(
     async (input) => {
-      if (adminMode || !publicCatalogMode) return addInquiry(input);
+      if (adminMode) throw new Error('INQUIRY_SUBMISSION_NOT_AVAILABLE_IN_ADMIN');
+      if (!publicCatalogMode) return addInquiry(input);
 
       const response = await fetch('/api/inquiries', {
         method: 'POST',
@@ -438,54 +473,76 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
     [adminMode, publicCatalogMode, addInquiry],
   );
 
-  const updateInquiryStatus: DemoStore['updateInquiryStatus'] = useCallback((id, status) => {
-    setInquiries((prev) => prev.map((i) => (i.id === id ? { ...i, status } : i)));
+  const updateInquiryStatus: DemoStore['updateInquiryStatus'] = useCallback(async (id, status) => {
     if (adminMode) {
-      void persistAdminMutation('PATCH', { type: 'inquiries', id, patch: { status } }).then((result) => {
-        if (result.ok && result.record) setInquiries((prev) => prev.map((item) =>
+      const result = await persistAdminMutation('PATCH', { type: 'inquiries', id, patch: { status } });
+      if (result.ok && result.record) {
+        setInquiries((prev) => prev.map((item) =>
           item.id === id ? (result.record as unknown as Inquiry) : item,
         ));
-      });
+      }
+      return result;
     }
+
+    setInquiries((prev) => prev.map((i) => (i.id === id ? { ...i, status } : i)));
+    return { ok: true };
   }, [adminMode, persistAdminMutation]);
 
-  const deleteInquiry: DemoStore['deleteInquiry'] = useCallback((id) => {
+  const deleteInquiry: DemoStore['deleteInquiry'] = useCallback(async (id) => {
+    if (adminMode) {
+      const result = await persistAdminMutation('DELETE', { type: 'inquiries', id });
+      if (result.ok) setInquiries((prev) => prev.filter((i) => i.id !== id));
+      return result;
+    }
+
     setInquiries((prev) => prev.filter((i) => i.id !== id));
-    if (adminMode) void persistAdminMutation('DELETE', { type: 'inquiries', id });
+    return { ok: true };
   }, [adminMode, persistAdminMutation]);
 
-  const addReservation: DemoStore['addReservation'] = useCallback((input) => {
+  const addReservation: DemoStore['addReservation'] = useCallback(async (input) => {
     const created: Reservation = {
       ...input,
       id: `r-${Date.now().toString(36)}`,
       createdAt: new Date().toISOString(),
     };
-    setReservations((prev) => [created, ...prev]);
+
     if (adminMode) {
       const { id: _localId, createdAt: _localCreatedAt, ...record } = created;
-      void persistAdminMutation('POST', { type: 'reservations', record }).then((result) => {
-        if (result.ok && result.record) setReservations((prev) => prev.map((item) =>
-          item.id === created.id ? (result.record as unknown as Reservation) : item,
-        ));
-      });
+      const result = await persistAdminMutation('POST', { type: 'reservations', record });
+      if (result.ok && result.record) {
+        setReservations((prev) => [result.record as unknown as Reservation, ...prev]);
+      }
+      return result;
     }
-    return created;
+
+    setReservations((prev) => [created, ...prev]);
+    return { ok: true, record: created as unknown as Record<string, unknown> };
   }, [adminMode, persistAdminMutation]);
 
-  const updateReservation: DemoStore['updateReservation'] = useCallback((id, patch) => {
-    setReservations((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  const updateReservation: DemoStore['updateReservation'] = useCallback(async (id, patch) => {
     if (adminMode) {
-      void persistAdminMutation('PATCH', { type: 'reservations', id, patch }).then((result) => {
-        if (result.ok && result.record) setReservations((prev) => prev.map((item) =>
+      const result = await persistAdminMutation('PATCH', { type: 'reservations', id, patch });
+      if (result.ok && result.record) {
+        setReservations((prev) => prev.map((item) =>
           item.id === id ? (result.record as unknown as Reservation) : item,
         ));
-      });
+      }
+      return result;
     }
+
+    setReservations((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    return { ok: true };
   }, [adminMode, persistAdminMutation]);
 
-  const deleteReservation: DemoStore['deleteReservation'] = useCallback((id) => {
+  const deleteReservation: DemoStore['deleteReservation'] = useCallback(async (id) => {
+    if (adminMode) {
+      const result = await persistAdminMutation('DELETE', { type: 'reservations', id });
+      if (result.ok) setReservations((prev) => prev.filter((r) => r.id !== id));
+      return result;
+    }
+
     setReservations((prev) => prev.filter((r) => r.id !== id));
-    if (adminMode) void persistAdminMutation('DELETE', { type: 'reservations', id });
+    return { ok: true };
   }, [adminMode, persistAdminMutation]);
 
   const toggleFavorite = useCallback((id: string) => {
