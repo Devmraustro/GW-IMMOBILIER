@@ -124,4 +124,53 @@ describe('admin record validation', () => {
     expect(createRecordId('inquiries')).toMatch(/^i-[0-9a-f-]+$/i);
     expect(createRecordId('reservations')).toMatch(/^r-[0-9a-f-]+$/i);
   });
+
+  it('rejects invalid partial property and vehicle fields', () => {
+    expect(validateRecordPatch('properties', { bedrooms: 'two' })).toEqual({
+      ok: false,
+      error: 'INVALID_BEDROOMS',
+    });
+    expect(validateRecordPatch('properties', { currency: 'USD' })).toEqual({
+      ok: false,
+      error: 'INVALID_CURRENCY',
+    });
+    expect(validateRecordPatch('vehicles', { year: 1800 })).toEqual({
+      ok: false,
+      error: 'INVALID_YEAR',
+    });
+    expect(validateRecordPatch('vehicles', { featured: 'yes' })).toEqual({
+      ok: false,
+      error: 'INVALID_FEATURED',
+    });
+  });
+
+  it('validates inquiry contact fields and full date ranges on patch', () => {
+    expect(validateRecordPatch('inquiries', { phone: 'not-a-phone' })).toEqual({
+      ok: false,
+      error: 'INVALID_PHONE',
+    });
+    expect(validateRecordPatch('inquiries', { email: 'not-an-email' })).toEqual({
+      ok: false,
+      error: 'INVALID_EMAIL',
+    });
+    expect(validateRecordPatch('inquiries', { startDate: '2026-10-20' })).toEqual({
+      ok: false,
+      error: 'DATE_RANGE_REQUIRES_BOTH',
+    });
+  });
+
+  it('rejects partial reservation date ranges and deposits larger than amounts', () => {
+    expect(validateRecordPatch('reservations', { endDate: '2026-10-20' })).toEqual({
+      ok: false,
+      error: 'DATE_RANGE_REQUIRES_BOTH',
+    });
+    expect(validateRecordPatch('reservations', { amount: 100, deposit: 120 })).toEqual({
+      ok: false,
+      error: 'DEPOSIT_EXCEEDS_AMOUNT',
+    });
+    expect(validateRecordPatch('reservations', { amount: 5_000_000_000_000 })).toEqual({
+      ok: false,
+      error: 'INVALID_AMOUNT',
+    });
+  });
 });
