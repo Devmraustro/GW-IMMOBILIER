@@ -69,6 +69,7 @@ export type DemoStore = {
   toggleVehicleAvailability: (id: string, available: boolean) => void;
 
   addInquiry: (input: Omit<Inquiry, 'id' | 'createdAt'>) => Inquiry;
+  submitInquiry: (input: Omit<Inquiry, 'id' | 'createdAt'>) => Promise<Inquiry>;
   updateInquiryStatus: (id: string, status: Inquiry['status']) => void;
   deleteInquiry: (id: string) => void;
 
@@ -89,20 +90,79 @@ const DemoStoreContext = createContext<DemoStore | null>(null);
 export function DemoStoreProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const adminMode = pathname.startsWith('/admin') && pathname !== '/admin/login';
+  const publicCatalogMode =
+    process.env.NEXT_PUBLIC_CATALOG_MODE === 'database' ||
+    (process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_CATALOG_MODE !== 'demo');
   const { t } = useI18n();
   const [hydrated, setHydrated] = useState(false);
   const [persistenceMode, setPersistenceMode] = useState<StorePersistenceMode>('loading');
-  const [properties, setProperties] = useState<Property[]>(seedProperties);
-  const [vehicles, setVehicles] = useState<Vehicle[]>(seedVehicles);
-  const [inquiries, setInquiries] = useState<Inquiry[]>(seedInquiries);
-  const [reservations, setReservations] = useState<Reservation[]>(seedReservations);
+  const [properties, setProperties] = useState<Property[]>(() =>
+    adminMode || publicCatalogMode ? [] : seedProperties,
+  );
+  const [vehicles, setVehicles] = useState<Vehicle[]>(() =>
+    adminMode || publicCatalogMode ? [] : seedVehicles,
+  );
+  const [inquiries, setInquiries] = useState<Inquiry[]>(() =>
+    adminMode || publicCatalogMode ? [] : seedInquiries,
+  );
+  const [reservations, setReservations] = useState<Reservation[]>(() =>
+    adminMode || publicCatalogMode ? [] : seedReservations,
+  );
   const [favorites, setFavorites] = useState<string[]>([]);
   const firstRender = useRef(true);
 
-  // Public pages keep local prototype data. Admin loads only authenticated
-  // server records; a failed database request must never display seed data.
+  // In production, public catalog mode defaults to database and never exposes
+  // the demo seeds. Local demo mode is opt-in via NEXT_PUBLIC_CATALOG_MODE=demo.
   useEffect(() => {
     let cancelled = false;
+
+    if (!adminMode && publicCatalogMode) {
+      setHydrated(false);
+      setPersistenceMode('loading');
+      setProperties([]);
+      setVehicles([]);
+      setInquiries([]);
+      setReservations([]);
+      setFavorites(read<string[]>(STORAGE_KEYS.favorites, []));
+
+      async function loadPublicCatalog() {
+        try {
+          const [propertiesResponse, vehiclesResponse] = await Promise.all([
+            fetch('/api/catalog?type=properties&limit=250', { cache: 'no-store' }),
+            fetch('/api/catalog?type=vehicles&limit=250', { cache: 'no-store' }),
+          ]);
+          if (!propertiesResponse.ok || !vehiclesResponse.ok) {
+            throw new Error('Public catalog is unavailable');
+          }
+          const [propertiesBody, vehiclesBody] = await Promise.all([
+            propertiesResponse.json() as Promise<{ records?: unknown }>,
+            vehiclesResponse.json() as Promise<{ records?: unknown }>,
+          ]);
+          if (!Array.isArray(propertiesBody.records) || !Array.isArray(vehiclesBody.records)) {
+            throw new Error('Invalid public catalog response');
+          }
+          if (cancelled) return;
+          setProperties(propertiesBody.records as Property[]);
+          setVehicles(vehiclesBody.records as Vehicle[]);
+          setInquiries([]);
+          setReservations([]);
+          setPersistenceMode('database');
+          setHydrated(true);
+        } catch {
+          if (cancelled) return;
+          setProperties([]);
+          setVehicles([]);
+          setInquiries([]);
+          setReservations([]);
+          setPersistenceMode('unavailable');
+          setHydrated(true);
+        }
+      }
+
+      void loadPublicCatalog();
+      return () => { cancelled = true; };
+    }
+
     if (!adminMode) {
       setProperties(read<Property[]>(STORAGE_KEYS.properties, seedProperties));
       setVehicles(read<Vehicle[]>(STORAGE_KEYS.vehicles, seedVehicles));
@@ -163,7 +223,7 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
     }
     void loadAdminRecords();
     return () => { cancelled = true; };
-  }, [adminMode]);
+  }, [adminMode, publicCatalogMode]);
 
   useEffect(() => {
     if (firstRender.current || !hydrated || adminMode || persistenceMode !== 'demo') return;
@@ -339,6 +399,32 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
     return created;
   }, [adminMode, persistAdminMutation]);
 
+  const submitInquiry: DemoStore['submitInquiry'] = useCallback(
+    async (input) => {
+      if (adminMode || !publicCatalogMode) return addInquiry(input);
+
+      const response = await fetch('/api/inquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        credentials: 'same-origin',
+        cache: 'no-store',
+        body: JSON.stringify(input),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => null) as { error?: unknown } | null;
+        throw new Error(typeof body?.error === 'string' ? body.error : 'SUBMISSION_UNAVAILABLE');
+      }
+      const body = await response.json() as { inquiry?: unknown };
+      if (!body.inquiry || typeof body.inquiry !== 'object') {
+        throw new Error('INVALID_INQUIRY_RESPONSE');
+      }
+      const saved = body.inquiry as Inquiry;
+      setInquiries((prev) => [saved, ...prev]);
+      return saved;
+    },
+    [adminMode, publicCatalogMode, addInquiry],
+  );
+
   const updateInquiryStatus: DemoStore['updateInquiryStatus'] = useCallback((id, status) => {
     setInquiries((prev) => prev.map((i) => (i.id === id ? { ...i, status } : i)));
     if (adminMode) {
@@ -449,6 +535,7 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
       deleteVehicle,
       toggleVehicleAvailability,
       addInquiry,
+      submitInquiry,
       updateInquiryStatus,
       deleteInquiry,
       addReservation,
@@ -477,6 +564,7 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
       deleteVehicle,
       toggleVehicleAvailability,
       addInquiry,
+      submitInquiry,
       updateInquiryStatus,
       deleteInquiry,
       addReservation,
