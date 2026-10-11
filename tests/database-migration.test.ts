@@ -35,6 +35,7 @@ describe('PostgreSQL initial migration', () => {
     expect(migration).not.toContain("(payload->>'startDate')::date");
     expect(migration).not.toContain("(payload->>'endDate')::date");
     expect(migration).toContain('CONSTRAINT gwi_reservations_valid_range');
+    expect(migration).toContain('CONSTRAINT gwi_reservations_valid_finances');
     expect(migration).toContain('CONSTRAINT gwi_reservations_no_overlap');
     expect(migration).toContain("daterange(start_date, end_date, '[)') WITH &&");
     expect(migration).toContain("WHERE (reservation_status <> 'cancelled')");
