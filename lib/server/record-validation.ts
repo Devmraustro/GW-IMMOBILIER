@@ -1,3 +1,5 @@
+import { isValidEmail, isValidPhone } from '@/lib/validation';
+
 export const RECORD_TYPES = [
   'properties',
   'vehicles',
@@ -344,6 +346,30 @@ export function validateRecordPatch(
        (value.availability.availableTo !== undefined && !isIsoDate(value.availability.availableTo)))) {
       return { ok: false, error: 'INVALID_AVAILABILITY' };
     }
+    if ('reference' in value && !nonEmptyString(value.reference, 80)) return { ok: false, error: 'INVALID_REFERENCE' };
+    if ('currency' in value && value.currency !== 'DZD') return { ok: false, error: 'INVALID_CURRENCY' };
+    if ('surface' in value && (!finiteNumber(value.surface) || value.surface < 0 || value.surface > 1_000_000)) {
+      return { ok: false, error: 'INVALID_SURFACE' };
+    }
+    if ('bedrooms' in value && (!Number.isInteger(value.bedrooms) || (value.bedrooms as number) < 0 || (value.bedrooms as number) > 100)) {
+      return { ok: false, error: 'INVALID_BEDROOMS' };
+    }
+    if ('bathrooms' in value && (!Number.isInteger(value.bathrooms) || (value.bathrooms as number) < 0 || (value.bathrooms as number) > 100)) {
+      return { ok: false, error: 'INVALID_BATHROOMS' };
+    }
+    if ('floor' in value && value.floor !== undefined &&
+      (!Number.isInteger(value.floor) || (value.floor as number) < -20 || (value.floor as number) > 300)) {
+      return { ok: false, error: 'INVALID_FLOOR' };
+    }
+    if ('price' in value && finiteNumber(value.price) && value.price > 1_000_000_000_000) {
+      return { ok: false, error: 'INVALID_PRICE' };
+    }
+    if ('availability' in value && isPlainRecord(value.availability) &&
+      isIsoDate(value.availability.availableFrom) &&
+      isIsoDate(value.availability.availableTo) &&
+      value.availability.availableTo < value.availability.availableFrom) {
+      return { ok: false, error: 'INVALID_AVAILABILITY_RANGE' };
+    }
     if ('furnished' in value && typeof value.furnished !== 'boolean') return { ok: false, error: 'INVALID_FURNISHED' };
     if ('featured' in value && typeof value.featured !== 'boolean') return { ok: false, error: 'INVALID_FEATURED' };
   }
@@ -351,7 +377,21 @@ export function validateRecordPatch(
     if ('category' in value && !isEnumValue(value.category, VEHICLE_CATEGORIES)) return { ok: false, error: 'INVALID_CATEGORY' };
     if ('transmission' in value && !isEnumValue(value.transmission, TRANSMISSIONS)) return { ok: false, error: 'INVALID_TRANSMISSION' };
     if ('fuel' in value && !isEnumValue(value.fuel, FUEL_TYPES)) return { ok: false, error: 'INVALID_FUEL' };
+    if ('reference' in value && !nonEmptyString(value.reference, 80)) return { ok: false, error: 'INVALID_REFERENCE' };
+    if ('brand' in value && !nonEmptyString(value.brand, 120)) return { ok: false, error: 'INVALID_BRAND' };
+    if ('model' in value && !nonEmptyString(value.model, 120)) return { ok: false, error: 'INVALID_MODEL' };
+    if ('year' in value && (!Number.isInteger(value.year) || (value.year as number) < 1950 || (value.year as number) > 2100)) {
+      return { ok: false, error: 'INVALID_YEAR' };
+    }
+    if ('seats' in value && (!Number.isInteger(value.seats) || (value.seats as number) < 1 || (value.seats as number) > 100)) {
+      return { ok: false, error: 'INVALID_SEATS' };
+    }
+    if ('dailyPrice' in value && finiteNumber(value.dailyPrice) && value.dailyPrice > 1_000_000_000) {
+      return { ok: false, error: 'INVALID_DAILY_PRICE' };
+    }
+    if ('currency' in value && value.currency !== 'DZD') return { ok: false, error: 'INVALID_CURRENCY' };
     if ('available' in value && typeof value.available !== 'boolean') return { ok: false, error: 'INVALID_AVAILABILITY' };
+    if ('featured' in value && typeof value.featured !== 'boolean') return { ok: false, error: 'INVALID_FEATURED' };
     if ('pickup' in value &&
       (!isPlainRecord(value.pickup) ||
        !isEnumValue(value.pickup.area, AREA_IDS) ||
@@ -361,22 +401,69 @@ export function validateRecordPatch(
   if (type === 'inquiries') {
     if ('type' in value && !isEnumValue(value.type, INQUIRY_TYPES)) return { ok: false, error: 'INVALID_INQUIRY_TYPE' };
     if ('channel' in value && !isEnumValue(value.channel, INQUIRY_CHANNELS)) return { ok: false, error: 'INVALID_CHANNEL' };
-    for (const key of ['fullName', 'phone', 'message', 'email'] as const) {
-      if (key in value && typeof value[key] !== 'string') return { ok: false, error: 'INVALID_INQUIRY_FIELD' };
+    if ('fullName' in value && !nonEmptyString(value.fullName, 160)) return { ok: false, error: 'INVALID_FULL_NAME' };
+    if ('phone' in value && (!nonEmptyString(value.phone, 80) || !isValidPhone(value.phone))) {
+      return { ok: false, error: 'INVALID_PHONE' };
+    }
+    if ('message' in value && (!nonEmptyString(value.message, 5000) || value.message.trim().length < 10)) {
+      return { ok: false, error: 'INVALID_MESSAGE' };
+    }
+    if ('email' in value && (
+      typeof value.email !== 'string' ||
+      value.email.length > 320 ||
+      (!!value.email.trim() && !isValidEmail(value.email))
+    )) return { ok: false, error: 'INVALID_EMAIL' };
+    if ('propertyId' in value && !nonEmptyString(value.propertyId, 160)) return { ok: false, error: 'INVALID_PROPERTY_ID' };
+    if ('vehicleId' in value && !nonEmptyString(value.vehicleId, 160)) return { ok: false, error: 'INVALID_VEHICLE_ID' };
+    if ('startDate' in value && !isIsoDate(value.startDate)) return { ok: false, error: 'INVALID_START_DATE' };
+    if ('endDate' in value && !isIsoDate(value.endDate)) return { ok: false, error: 'INVALID_END_DATE' };
+    if (('startDate' in value) !== ('endDate' in value)) {
+      return { ok: false, error: 'DATE_RANGE_REQUIRES_BOTH' };
+    }
+    if ('startDate' in value && 'endDate' in value && !isDateRange(value.startDate, value.endDate)) {
+      return { ok: false, error: 'INVALID_DATE_RANGE' };
+    }
+    if ('type' in value) {
+      if (value.type === 'general' && ('propertyId' in value || 'vehicleId' in value)) {
+        return { ok: false, error: 'INVALID_LISTING_REFERENCE' };
+      }
+      if (value.type === 'property' && 'vehicleId' in value) {
+        return { ok: false, error: 'INVALID_LISTING_REFERENCE' };
+      }
+      if (value.type === 'vehicle' && 'propertyId' in value) {
+        return { ok: false, error: 'INVALID_LISTING_REFERENCE' };
+      }
     }
   }
   if (type === 'reservations') {
     if ('kind' in value && !isEnumValue(value.kind, RESERVATION_KINDS)) return { ok: false, error: 'INVALID_RESERVATION_KIND' };
     if ('itemId' in value && !nonEmptyString(value.itemId, 160)) return { ok: false, error: 'INVALID_ITEM_ID' };
+    if ('itemReference' in value && !nonEmptyString(value.itemReference, 100)) return { ok: false, error: 'INVALID_ITEM_REFERENCE' };
     if ('itemTitle' in value && !isTranslated(value.itemTitle)) return { ok: false, error: 'INVALID_ITEM_TITLE' };
     if ('customerName' in value && !nonEmptyString(value.customerName, 160)) return { ok: false, error: 'INVALID_CUSTOMER_NAME' };
-    if ('phone' in value && !nonEmptyString(value.phone, 80)) return { ok: false, error: 'INVALID_PHONE' };
+    if ('phone' in value && (!nonEmptyString(value.phone, 80) || !isValidPhone(value.phone))) return { ok: false, error: 'INVALID_PHONE' };
+    if ('amount' in value && finiteNumber(value.amount) && value.amount > 1_000_000_000_000) {
+      return { ok: false, error: 'INVALID_AMOUNT' };
+    }
+    if ('deposit' in value && finiteNumber(value.deposit) && value.deposit > 1_000_000_000_000) {
+      return { ok: false, error: 'INVALID_DEPOSIT' };
+    }
+    if ('notes' in value && value.notes !== undefined &&
+      (typeof value.notes !== 'string' || value.notes.length > 5000)) {
+      return { ok: false, error: 'INVALID_NOTES' };
+    }
     if ('startDate' in value && !isIsoDate(value.startDate)) return { ok: false, error: 'INVALID_START_DATE' };
     if ('endDate' in value && !isIsoDate(value.endDate)) return { ok: false, error: 'INVALID_END_DATE' };
-    if (('startDate' in value || 'endDate' in value) && !isDateRange(
-      'startDate' in value ? value.startDate : '2000-01-01',
-      'endDate' in value ? value.endDate : '2000-01-02',
-    )) return { ok: false, error: 'INVALID_DATE_RANGE' };
+    if (('startDate' in value) !== ('endDate' in value)) {
+      return { ok: false, error: 'DATE_RANGE_REQUIRES_BOTH' };
+    }
+    if ('startDate' in value && 'endDate' in value && !isDateRange(value.startDate, value.endDate)) {
+      return { ok: false, error: 'INVALID_DATE_RANGE' };
+    }
+    if ('amount' in value && 'deposit' in value &&
+      finiteNumber(value.amount) && finiteNumber(value.deposit) && value.deposit > value.amount) {
+      return { ok: false, error: 'DEPOSIT_EXCEEDS_AMOUNT' };
+    }
   }
   for (const key of ['reference', 'brand', 'model', 'itemReference', 'phone', 'fullName', 'customerName'] as const) {
     if (key in value && typeof value[key] === 'string' && value[key].length > 500) {
