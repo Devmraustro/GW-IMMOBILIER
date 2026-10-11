@@ -27,6 +27,8 @@ export function Reveal({
     if (!node) return;
 
     if (typeof IntersectionObserver === 'undefined') {
+      // The fallback is needed only for browsers without IntersectionObserver.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setVisible(true);
       return;
     }
