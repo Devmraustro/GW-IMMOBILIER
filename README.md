@@ -9,10 +9,7 @@ fleet, an **interactive Leaflet/OpenStreetMap map with marker clustering**,
 Google-Maps itinerary links, WhatsApp inquiry flows, and a fully interactive
 **demonstration administration dashboard**.
 
-> ⚠️ **Demonstration mode.** Every listing, vehicle, inquiry, reservation and
-> statistic is **fictional seed data**. There is no backend, no database and no
-> authentication. Contact details are placeholders until the owner supplies
-> verified ones. See [Demo-mode limitations](#demo-mode-limitations).
+> ⚠️ **Pro development in progress.** The administration route now has a protected sign-in boundary based on private server environment credentials. The catalog still uses fictional seed data and the dashboard records are still stored in each browser; shared database-backed operations are not yet implemented. Contact details remain placeholders until the owner supplies verified ones. See [Demo-mode limitations](#demo-mode-limitations) and [Pro foundation status](docs/PRO_FOUNDATION.md).
 
 ---
 
