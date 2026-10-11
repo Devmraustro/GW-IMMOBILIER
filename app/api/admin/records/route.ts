@@ -97,7 +97,9 @@ function handleStorageError(error: unknown) {
       : '';
   if (code === '23505') return jsonError('RECORD_ALREADY_EXISTS', 409);
   if (code === '23P01') return jsonError('RESERVATION_DATE_CONFLICT', 409);
-  if (code === '22P02' || code === '22023') return jsonError('INVALID_RECORD', 400);
+  if (code === '22P02' || code === '22023' || code === '22007' || code === '23514') {
+    return jsonError('INVALID_RECORD', 400);
+  }
 
   // Keep database exception details (and connection strings) out of the HTTP response.
   console.error('[admin-records] storage operation failed', {
