@@ -18,7 +18,6 @@ export default function GlobalError({
 
   useEffect(() => {
     if (process.env.NODE_ENV !== 'production') {
-      // eslint-disable-next-line no-console
       console.error('[GW Immobilier]', error);
     }
   }, [error]);
