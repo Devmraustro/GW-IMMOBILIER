@@ -73,8 +73,17 @@ export async function verifyAdminSessionToken(
     if (parts.length !== 2 || !parts[0] || !parts[1]) return null;
     const encodedPayload = parts[0];
     const signature = decodeBase64Url(parts[1]);
+    // Copy into an ArrayBuffer-backed view so TypeScript's Web Crypto BufferSource
+    // types are satisfied even when Uint8Array is parameterized by ArrayBufferLike.
+    const signatureBuffer = new ArrayBuffer(signature.byteLength);
+    new Uint8Array(signatureBuffer).set(signature);
     const key = await importHmacKey(secret);
-    const valid = await crypto.subtle.verify('HMAC', key, signature, encoder.encode(encodedPayload));
+    const valid = await crypto.subtle.verify(
+      'HMAC',
+      key,
+      signatureBuffer,
+      encoder.encode(encodedPayload),
+    );
     if (!valid) return null;
 
     const payload: unknown = JSON.parse(
