@@ -64,7 +64,7 @@ Google-Maps itinerary links, WhatsApp inquiry flows, and a fully interactive
 - Switch the entire interface between **French (default, LTR)** and
   **Arabic (RTL)** — the choice survives navigation and refreshes.
 
-**For the owner (demonstration dashboard at `/admin`)**
+**For the owner (protected admin dashboard at `/admin`)**
 
 - Overview computed **from the live data** (never hardcoded): total listings,
   active properties, available vehicles, pending inquiries, upcoming
