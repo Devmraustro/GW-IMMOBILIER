@@ -114,7 +114,7 @@ export async function updateAdminRecord(
       INSERT INTO gwi_admin_audit_events
         (actor_email, action, entity_type, entity_id, metadata)
       SELECT ${actorEmail}, 'update', ${type}, saved.id,
-             ${JSON.stringify(patch)}::jsonb
+             jsonb_build_object('changedFields', ${JSON.stringify(Object.keys(patch))}::jsonb)
       FROM saved
       RETURNING id
     )
