@@ -408,7 +408,17 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         credentials: 'same-origin',
         cache: 'no-store',
-        body: JSON.stringify(input),
+        body: JSON.stringify({
+          type: input.type,
+          fullName: input.fullName.trim(),
+          phone: input.phone.trim(),
+          ...(input.email?.trim() ? { email: input.email.trim() } : {}),
+          message: input.message.trim(),
+          ...(input.propertyId ? { propertyId: input.propertyId } : {}),
+          ...(input.vehicleId ? { vehicleId: input.vehicleId } : {}),
+          ...(input.startDate ? { startDate: input.startDate } : {}),
+          ...(input.endDate ? { endDate: input.endDate } : {}),
+        }),
       });
       if (!response.ok) {
         const body = await response.json().catch(() => null) as { error?: unknown } | null;
