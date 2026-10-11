@@ -56,8 +56,13 @@ export function PropertyDetail({ slug }: { slug: string }) {
   const mapRef = useRef<null | import('leaflet').Map>(null);
 
   useEffect(() => {
-    if (hydrated && !property) setMissing(true);
-  }, [hydrated, property]);
+    if (
+      hydrated &&
+      persistenceMode !== 'loading' &&
+      persistenceMode !== 'unavailable' &&
+      !property
+    ) setMissing(true);
+  }, [hydrated, persistenceMode, property]);
 
   if (missing) {
     return (
