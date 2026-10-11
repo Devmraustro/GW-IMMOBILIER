@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { CheckCircle2, MessageCircle, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Property, Vehicle } from '@/types';
