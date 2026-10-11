@@ -46,6 +46,7 @@ describe('PostgreSQL initial migration', () => {
   it('defines rate-limit windows and cleanup indexes', () => {
     expect(migration).toContain('gwi_admin_login_attempts_updated_idx');
     expect(migration).toContain('gwi_public_inquiry_attempts_updated_idx');
-    expect(migration).toContain("updated_at < NOW() - INTERVAL '1 day'");
+    expect(migration).toContain('window_started_at TIMESTAMPTZ');
+    expect(migration).toContain('updated_at TIMESTAMPTZ');
   });
 });
