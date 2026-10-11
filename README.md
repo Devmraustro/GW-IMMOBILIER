@@ -41,6 +41,8 @@ Google-Maps itinerary links, WhatsApp inquiry flows, and a fully interactive
 
 ## What the project does
 
+> Pro implementation status: the admin sign-in boundary is the first delivery. Shared database persistence, staff accounts/roles, and server-side data CRUD are still pending. See [docs/PRO_FOUNDATION.md](docs/PRO_FOUNDATION.md).
+
 **For customers**
 
 - Discover the brand on a premium, photography-led home page with a working
@@ -226,8 +228,7 @@ renders a broken-image icon and never breaks the layout, even fully offline.
 
 ## Administration dashboard
 
-- Persistent demo banner + `Démo` badge; `/admin` is excluded from
-  `robots.txt` and from the sitemap.
+- `/admin` is protected by a signed, HttpOnly session cookie and private server-side credentials. The route remains excluded from `robots.txt` and the sitemap.
 - Every KPI is derived from the current store, never hardcoded.
 - **Double-booking detection is real logic** (`lib/availability.ts`, unit
   tested): ranges are half-open — a stay ending on the 10th frees the listing
@@ -241,9 +242,7 @@ renders a broken-image icon and never breaks the layout, even fully offline.
 
 Be explicit about these when presenting the prototype:
 
-1. **No backend, no database, no authentication.** Anyone who can reach
-   `/admin` can edit it. The dashboard is a *process demonstration*, not a
-   secure area.
+1. **No shared database yet.** The admin area and `/api/admin/*` routes are gated by a signed, HttpOnly, SameSite session. A single administrator is configured through private server environment variables. However, listings, inquiries and reservations still persist in browser `localStorage`; they are not shared across devices, so this is not yet a live operational system.
 2. **Persistence is `localStorage` only.** Changes are private to one browser
    on one device; clearing site data resets everything.
 3. **Forms do not send e-mail or messages.** Form submissions are stored
@@ -380,8 +379,7 @@ NEXT_PUBLIC_SITE_URL=https://gw-immobilier.dz
 
 ## Environment variables
 
-All variables are optional and public (`NEXT_PUBLIC_*`). See `.env.example`.
-There are **no secrets** in this project and **no key is ever required**.
+Public contact and site settings use `NEXT_PUBLIC_*`. Protected admin access uses the private server-side variables `ADMIN_EMAIL`, `ADMIN_PASSWORD` (minimum 16 characters) and `ADMIN_SESSION_SECRET` (minimum 32 characters). Never prefix admin secrets with `NEXT_PUBLIC_`. See `.env.example` and `docs/PRO_FOUNDATION.md`.
 
 ---
 
@@ -487,10 +485,7 @@ Recommended production path:
 1. **Database** — PostgreSQL with Prisma (or Drizzle). Map `types/index.ts`
    directly to tables; `Property`, `Vehicle`, `Inquiry`, `Reservation` are
    already persistence-shaped.
-2. **Authentication & authorisation** — NextAuth.js or Clerk for the admin
-   area, plus **server-side authorisation on every mutation** (never trust the
-   client). Add middleware protecting `/admin/*` and role checks in the API
-   routes.
+2. **Authentication & authorisation** — the first Pro foundation adds a signed session and protection for `/admin/*` and `/api/admin/*`, using one server-configured administrator. Before a real Pro release, add database-backed users/roles and enforce permissions in every mutation handler.
 3. **Storage** — S3 / Cloudinary / Vercel Blob for listing photos, replacing
    the “one URL per line” textarea in the admin forms.
 4. **Server actions or route handlers** — `/api/properties`, `/api/vehicles`,
