@@ -222,9 +222,9 @@ export function InquiryManager() {
                     <div className="w-40">
                       <Select
                         value={inquiry.status}
-                        onValueChange={(value) => {
-                          updateInquiryStatus(inquiry.id, value as InquiryStatus);
-                          toast.success(t.admin.statusUpdated);
+                        onValueChange={async (value) => {
+                          const result = await updateInquiryStatus(inquiry.id, value as InquiryStatus);
+                          if (result.ok) toast.success(t.admin.statusUpdated);
                         }}
                       >
                         <SelectTrigger className="h-9 text-xs">
@@ -279,9 +279,9 @@ export function InquiryManager() {
                       size="sm"
                       variant="ghost"
                       className="text-danger hover:bg-danger-soft"
-                      onClick={() => {
-                        deleteInquiry(inquiry.id);
-                        toast.success(t.admin.deleted);
+                      onClick={async () => {
+                        const result = await deleteInquiry(inquiry.id);
+                        if (result.ok) toast.success(t.admin.deleted);
                       }}
                       aria-label={t.common.delete}
                     >
