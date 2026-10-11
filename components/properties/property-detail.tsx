@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -52,17 +52,12 @@ export function PropertyDetail({ slug }: { slug: string }) {
   const { properties, hydrated, persistenceMode, isFavorite, toggleFavorite } = useDemoStore();
   const property = useMemo(() => properties.find((p) => p.slug === slug), [properties, slug]);
   const [shareError, setShareError] = useState(false);
-  const [missing, setMissing] = useState(false);
   const mapRef = useRef<null | import('leaflet').Map>(null);
-
-  useEffect(() => {
-    if (
-      hydrated &&
-      persistenceMode !== 'loading' &&
-      persistenceMode !== 'unavailable' &&
-      !property
-    ) setMissing(true);
-  }, [hydrated, persistenceMode, property]);
+  const missing =
+    hydrated &&
+    persistenceMode !== 'loading' &&
+    persistenceMode !== 'unavailable' &&
+    !property;
 
   if (missing) {
     return (
