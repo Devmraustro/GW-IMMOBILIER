@@ -7,7 +7,6 @@ BEGIN;
 
 CREATE TABLE IF NOT EXISTS gwi_properties (
   id TEXT PRIMARY KEY,
-  slug TEXT NOT NULL UNIQUE,
   payload JSONB NOT NULL CHECK (jsonb_typeof(payload) = 'object'),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -15,7 +14,6 @@ CREATE TABLE IF NOT EXISTS gwi_properties (
 
 CREATE TABLE IF NOT EXISTS gwi_vehicles (
   id TEXT PRIMARY KEY,
-  slug TEXT NOT NULL UNIQUE,
   payload JSONB NOT NULL CHECK (jsonb_typeof(payload) = 'object'),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -47,6 +45,11 @@ CREATE TABLE IF NOT EXISTS gwi_admin_audit_events (
     CHECK (jsonb_typeof(metadata) = 'object'),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS gwi_properties_slug_idx
+  ON gwi_properties ((payload->>'slug'));
+CREATE UNIQUE INDEX IF NOT EXISTS gwi_vehicles_slug_idx
+  ON gwi_vehicles ((payload->>'slug'));
 
 CREATE INDEX IF NOT EXISTS gwi_properties_category_idx
   ON gwi_properties ((payload->>'category'));
