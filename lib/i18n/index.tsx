@@ -50,6 +50,8 @@ export function I18nProvider({
     try {
       const stored = window.localStorage.getItem(STORAGE_KEYS.locale);
       if (stored === 'fr' || stored === 'ar') {
+        // Restore persisted locale only after hydration to keep server/client markup identical.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLocaleState(stored);
       }
     } catch {
