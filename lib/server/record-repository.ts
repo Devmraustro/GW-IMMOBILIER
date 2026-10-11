@@ -1,13 +1,12 @@
 import 'server-only';
 
 import { getDatabase } from '@/lib/server/database';
-import {
-  tableForRecordType,
-  type RecordPayload,
-  type RecordType,
+import type {
+  RecordPayload,
+  RecordType,
 } from '@/lib/server/record-validation';
 
-type SqlClient = ReturnType<typeof getDatabase> extends infer T ? Exclude<T, null> : never;
+type SqlClient = Exclude<ReturnType<typeof getDatabase>, null>;
 
 interface StoredRecordRow {
   id: string;
@@ -33,15 +32,10 @@ export class DatabaseNotConfiguredError extends Error {
   }
 }
 
-function databaseOrThrow(): Exclude<ReturnType<typeof getDatabase>, null> {
+function databaseOrThrow(): SqlClient {
   const sql = getDatabase();
   if (!sql) throw new DatabaseNotConfiguredError();
   return sql;
-}
-
-function trustedTable(sql: SqlClient, type: RecordType) {
-  // tableForRecordType only returns a hard-coded allowlisted table name.
-  return sql.unsafe(tableForRecordType(type));
 }
 
 function payloadOf(row: StoredRecordRow): RecordPayload {
@@ -57,14 +51,30 @@ export async function listAdminRecords(
   limit = 100,
 ): Promise<RecordPayload[]> {
   const sql = databaseOrThrow();
-  const table = trustedTable(sql, type);
   const safeLimit = Math.min(250, Math.max(1, Math.trunc(limit)));
-  const rows = await sql`
-    SELECT id, payload, created_at, updated_at
-    FROM ${table}
-    ORDER BY updated_at DESC, id ASC
-    LIMIT ${safeLimit}
-  ` as unknown as StoredRecordRow[];
+  let rows: StoredRecordRow[];
+
+  // Keep every table identifier literal. User input must never become a SQL
+  // identifier, even after an allowlist check.
+  switch (type) {
+    case 'properties':
+      rows = await sql`SELECT id, payload, created_at, updated_at
+        FROM gwi_properties ORDER BY updated_at DESC, id ASC LIMIT ${safeLimit}`;
+      break;
+    case 'vehicles':
+      rows = await sql`SELECT id, payload, created_at, updated_at
+        FROM gwi_vehicles ORDER BY updated_at DESC, id ASC LIMIT ${safeLimit}`;
+      break;
+    case 'inquiries':
+      rows = await sql`SELECT id, payload, created_at, updated_at
+        FROM gwi_inquiries ORDER BY updated_at DESC, id ASC LIMIT ${safeLimit}`;
+      break;
+    case 'reservations':
+      rows = await sql`SELECT id, payload, created_at, updated_at
+        FROM gwi_reservations ORDER BY updated_at DESC, id ASC LIMIT ${safeLimit}`;
+      break;
+  }
+
   return rows.map(payloadOf);
 }
 
@@ -74,22 +84,71 @@ export async function createAdminRecord(
   actorEmail: string,
 ): Promise<RecordPayload> {
   const sql = databaseOrThrow();
-  const table = trustedTable(sql, type);
   const recordId = String(record.id);
-  const rows = await sql`
-    WITH saved AS (
-      INSERT INTO ${table} (id, payload)
-      VALUES (${recordId}, ${JSON.stringify(record)}::jsonb)
-      RETURNING id, payload, created_at, updated_at
-    ), logged AS (
-      INSERT INTO gwi_admin_audit_events
-        (actor_email, action, entity_type, entity_id, metadata)
-      SELECT ${actorEmail}, 'create', ${type}, saved.id, '{}'::jsonb
-      FROM saved
-      RETURNING id
-    )
-    SELECT id, payload, created_at, updated_at FROM saved
-  ` as unknown as StoredRecordRow[];
+  let rows: StoredRecordRow[];
+
+  switch (type) {
+    case 'properties':
+      rows = await sql`
+        WITH saved AS (
+          INSERT INTO gwi_properties (id, payload)
+          VALUES (${recordId}, ${JSON.stringify(record)}::jsonb)
+          RETURNING id, payload, created_at, updated_at
+        ), logged AS (
+          INSERT INTO gwi_admin_audit_events
+            (actor_email, action, entity_type, entity_id, metadata)
+          SELECT ${actorEmail}, 'create', ${type}, saved.id, '{}'::jsonb
+          FROM saved RETURNING id
+        )
+        SELECT id, payload, created_at, updated_at FROM saved
+      `;
+      break;
+    case 'vehicles':
+      rows = await sql`
+        WITH saved AS (
+          INSERT INTO gwi_vehicles (id, payload)
+          VALUES (${recordId}, ${JSON.stringify(record)}::jsonb)
+          RETURNING id, payload, created_at, updated_at
+        ), logged AS (
+          INSERT INTO gwi_admin_audit_events
+            (actor_email, action, entity_type, entity_id, metadata)
+          SELECT ${actorEmail}, 'create', ${type}, saved.id, '{}'::jsonb
+          FROM saved RETURNING id
+        )
+        SELECT id, payload, created_at, updated_at FROM saved
+      `;
+      break;
+    case 'inquiries':
+      rows = await sql`
+        WITH saved AS (
+          INSERT INTO gwi_inquiries (id, payload)
+          VALUES (${recordId}, ${JSON.stringify(record)}::jsonb)
+          RETURNING id, payload, created_at, updated_at
+        ), logged AS (
+          INSERT INTO gwi_admin_audit_events
+            (actor_email, action, entity_type, entity_id, metadata)
+          SELECT ${actorEmail}, 'create', ${type}, saved.id, '{}'::jsonb
+          FROM saved RETURNING id
+        )
+        SELECT id, payload, created_at, updated_at FROM saved
+      `;
+      break;
+    case 'reservations':
+      rows = await sql`
+        WITH saved AS (
+          INSERT INTO gwi_reservations (id, payload)
+          VALUES (${recordId}, ${JSON.stringify(record)}::jsonb)
+          RETURNING id, payload, created_at, updated_at
+        ), logged AS (
+          INSERT INTO gwi_admin_audit_events
+            (actor_email, action, entity_type, entity_id, metadata)
+          SELECT ${actorEmail}, 'create', ${type}, saved.id, '{}'::jsonb
+          FROM saved RETURNING id
+        )
+        SELECT id, payload, created_at, updated_at FROM saved
+      `;
+      break;
+  }
 
   if (!rows[0]) throw new Error('Record insert returned no row');
   return payloadOf(rows[0]);
@@ -102,24 +161,80 @@ export async function updateAdminRecord(
   actorEmail: string,
 ): Promise<RecordPayload | null> {
   const sql = databaseOrThrow();
-  const table = trustedTable(sql, type);
-  const rows = await sql`
-    WITH saved AS (
-      UPDATE ${table}
-      SET payload = payload || ${JSON.stringify(patch)}::jsonb,
-          updated_at = NOW()
-      WHERE id = ${id}
-      RETURNING id, payload, created_at, updated_at
-    ), logged AS (
-      INSERT INTO gwi_admin_audit_events
-        (actor_email, action, entity_type, entity_id, metadata)
-      SELECT ${actorEmail}, 'update', ${type}, saved.id,
-             jsonb_build_object('changedFields', ${JSON.stringify(Object.keys(patch))}::jsonb)
-      FROM saved
-      RETURNING id
-    )
-    SELECT id, payload, created_at, updated_at FROM saved
-  ` as unknown as StoredRecordRow[];
+  const encodedPatch = JSON.stringify(patch);
+  const changedFields = JSON.stringify(Object.keys(patch));
+  let rows: StoredRecordRow[];
+
+  switch (type) {
+    case 'properties':
+      rows = await sql`
+        WITH saved AS (
+          UPDATE gwi_properties
+          SET payload = payload || ${encodedPatch}::jsonb, updated_at = NOW()
+          WHERE id = ${id}
+          RETURNING id, payload, created_at, updated_at
+        ), logged AS (
+          INSERT INTO gwi_admin_audit_events
+            (actor_email, action, entity_type, entity_id, metadata)
+          SELECT ${actorEmail}, 'update', ${type}, saved.id,
+            jsonb_build_object('changedFields', ${changedFields}::jsonb)
+          FROM saved RETURNING id
+        )
+        SELECT id, payload, created_at, updated_at FROM saved
+      `;
+      break;
+    case 'vehicles':
+      rows = await sql`
+        WITH saved AS (
+          UPDATE gwi_vehicles
+          SET payload = payload || ${encodedPatch}::jsonb, updated_at = NOW()
+          WHERE id = ${id}
+          RETURNING id, payload, created_at, updated_at
+        ), logged AS (
+          INSERT INTO gwi_admin_audit_events
+            (actor_email, action, entity_type, entity_id, metadata)
+          SELECT ${actorEmail}, 'update', ${type}, saved.id,
+            jsonb_build_object('changedFields', ${changedFields}::jsonb)
+          FROM saved RETURNING id
+        )
+        SELECT id, payload, created_at, updated_at FROM saved
+      `;
+      break;
+    case 'inquiries':
+      rows = await sql`
+        WITH saved AS (
+          UPDATE gwi_inquiries
+          SET payload = payload || ${encodedPatch}::jsonb, updated_at = NOW()
+          WHERE id = ${id}
+          RETURNING id, payload, created_at, updated_at
+        ), logged AS (
+          INSERT INTO gwi_admin_audit_events
+            (actor_email, action, entity_type, entity_id, metadata)
+          SELECT ${actorEmail}, 'update', ${type}, saved.id,
+            jsonb_build_object('changedFields', ${changedFields}::jsonb)
+          FROM saved RETURNING id
+        )
+        SELECT id, payload, created_at, updated_at FROM saved
+      `;
+      break;
+    case 'reservations':
+      rows = await sql`
+        WITH saved AS (
+          UPDATE gwi_reservations
+          SET payload = payload || ${encodedPatch}::jsonb, updated_at = NOW()
+          WHERE id = ${id}
+          RETURNING id, payload, created_at, updated_at
+        ), logged AS (
+          INSERT INTO gwi_admin_audit_events
+            (actor_email, action, entity_type, entity_id, metadata)
+          SELECT ${actorEmail}, 'update', ${type}, saved.id,
+            jsonb_build_object('changedFields', ${changedFields}::jsonb)
+          FROM saved RETURNING id
+        )
+        SELECT id, payload, created_at, updated_at FROM saved
+      `;
+      break;
+  }
 
   return rows[0] ? payloadOf(rows[0]) : null;
 }
@@ -130,21 +245,63 @@ export async function deleteAdminRecord(
   actorEmail: string,
 ): Promise<boolean> {
   const sql = databaseOrThrow();
-  const table = trustedTable(sql, type);
-  const rows = await sql`
-    WITH deleted AS (
-      DELETE FROM ${table}
-      WHERE id = ${id}
-      RETURNING id
-    ), logged AS (
-      INSERT INTO gwi_admin_audit_events
-        (actor_email, action, entity_type, entity_id, metadata)
-      SELECT ${actorEmail}, 'delete', ${type}, deleted.id, '{}'::jsonb
-      FROM deleted
-      RETURNING id
-    )
-    SELECT id FROM deleted
-  ` as unknown as Array<{ id: string }>;
+  let rows: Array<{ id: string }>;
+
+  switch (type) {
+    case 'properties':
+      rows = await sql`
+        WITH deleted AS (
+          DELETE FROM gwi_properties WHERE id = ${id} RETURNING id
+        ), logged AS (
+          INSERT INTO gwi_admin_audit_events
+            (actor_email, action, entity_type, entity_id, metadata)
+          SELECT ${actorEmail}, 'delete', ${type}, deleted.id, '{}'::jsonb
+          FROM deleted RETURNING id
+        )
+        SELECT id FROM deleted
+      `;
+      break;
+    case 'vehicles':
+      rows = await sql`
+        WITH deleted AS (
+          DELETE FROM gwi_vehicles WHERE id = ${id} RETURNING id
+        ), logged AS (
+          INSERT INTO gwi_admin_audit_events
+            (actor_email, action, entity_type, entity_id, metadata)
+          SELECT ${actorEmail}, 'delete', ${type}, deleted.id, '{}'::jsonb
+          FROM deleted RETURNING id
+        )
+        SELECT id FROM deleted
+      `;
+      break;
+    case 'inquiries':
+      rows = await sql`
+        WITH deleted AS (
+          DELETE FROM gwi_inquiries WHERE id = ${id} RETURNING id
+        ), logged AS (
+          INSERT INTO gwi_admin_audit_events
+            (actor_email, action, entity_type, entity_id, metadata)
+          SELECT ${actorEmail}, 'delete', ${type}, deleted.id, '{}'::jsonb
+          FROM deleted RETURNING id
+        )
+        SELECT id FROM deleted
+      `;
+      break;
+    case 'reservations':
+      rows = await sql`
+        WITH deleted AS (
+          DELETE FROM gwi_reservations WHERE id = ${id} RETURNING id
+        ), logged AS (
+          INSERT INTO gwi_admin_audit_events
+            (actor_email, action, entity_type, entity_id, metadata)
+          SELECT ${actorEmail}, 'delete', ${type}, deleted.id, '{}'::jsonb
+          FROM deleted RETURNING id
+        )
+        SELECT id FROM deleted
+      `;
+      break;
+  }
+
   return rows.length > 0;
 }
 
