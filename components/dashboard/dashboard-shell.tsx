@@ -7,29 +7,19 @@ import {
   Building2,
   Car,
   ChevronLeft,
-  Info,
   Inbox,
   LayoutDashboard,
   LogOut,
+  LoaderCircle,
   Menu,
-  RotateCcw,
   Wallet,
   X,
 } from 'lucide-react';
-import { toast } from 'sonner';
 import { useI18n } from '@/lib/i18n';
 import { useDemoStore } from '@/lib/demo-store';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/layout/logo';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 
 const ITEMS = [
   { href: '/admin', key: 'overview', icon: LayoutDashboard },
@@ -62,9 +52,8 @@ function CalendarIcon(props: { className?: string }) {
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { t, locale } = useI18n();
   const pathname = usePathname();
-  const { resetDemoData, inquiries } = useDemoStore();
+  const { inquiries, persistenceMode } = useDemoStore();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [resetOpen, setResetOpen] = useState(false);
 
   const pending = inquiries.filter((item) => item.status === 'new').length;
 
@@ -136,14 +125,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   <LogOut className="size-[18px]" aria-hidden />
                   {t.admin.logout}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setResetOpen(true)}
-                  className="mt-2 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-500 transition-colors hover:bg-white hover:text-danger"
-                >
-                  <RotateCcw className="size-[18px]" aria-hidden />
-                  {t.admin.resetDemoData}
-                </button>
               </div>
               <Link
                 href="/"
@@ -168,7 +149,44 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 {t.admin.dashboard}
               </Button>
             </div>
-            {children}
+            {persistenceMode === 'database' ? (
+              children
+            ) : (
+              <section
+                role={persistenceMode === 'unavailable' ? 'alert' : 'status'}
+                aria-live="polite"
+                className="rounded-2xl border border-ink-100 bg-white p-8 shadow-card"
+              >
+                <div className="flex items-start gap-3">
+                  {persistenceMode === 'loading' ? (
+                    <LoaderCircle className="mt-1 size-5 shrink-0 animate-spin text-gold-600" aria-hidden />
+                  ) : (
+                    <span className="mt-1 size-2.5 shrink-0 rounded-full bg-danger" aria-hidden />
+                  )}
+                  <div>
+                    <h1 className="font-display text-xl font-semibold text-ink-950">
+                      {persistenceMode === 'unavailable'
+                        ? t.admin.databaseUnavailable
+                        : t.admin.databaseConnecting}
+                    </h1>
+                    {persistenceMode === 'unavailable' ? (
+                      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-600">
+                        {t.admin.databaseUnavailableDescription}
+                      </p>
+                    ) : null}
+                    {persistenceMode === 'unavailable' ? (
+                      <Button
+                        className="mt-5"
+                        variant="outline"
+                        onClick={() => window.location.reload()}
+                      >
+                        {t.common.retry}
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+              </section>
+            )}
           </main>
         </div>
       </div>
@@ -207,50 +225,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               <LogOut className="size-[18px]" aria-hidden />
               {t.admin.logout}
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMobileOpen(false);
-                setResetOpen(true);
-              }}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-danger"
-            >
-              <RotateCcw className="size-[18px]" aria-hidden />
-              {t.admin.resetDemoData}
-            </button>
           </div>
         </div>
       ) : null}
 
-      {/* Reset dialog */}
-      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t.admin.resetDemoData}</DialogTitle>
-            <DialogDescription>{t.admin.resetDemoConfirm}</DialogDescription>
-          </DialogHeader>
-          <div className="flex items-start gap-2 rounded-xl bg-info-soft px-3.5 py-3 text-xs leading-relaxed text-info">
-            <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
-            {t.admin.futureAuthText}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setResetOpen(false)}>
-              {t.common.cancel}
-            </Button>
-            <Button
-              variant="danger"
-              onClick={() => {
-                resetDemoData();
-                setResetOpen(false);
-                toast.success(t.admin.resetDone);
-              }}
-            >
-              <RotateCcw aria-hidden />
-              {t.common.confirm}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
