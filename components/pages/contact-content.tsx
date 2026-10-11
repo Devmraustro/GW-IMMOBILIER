@@ -31,7 +31,7 @@ import Reveal from '@/components/shared/reveal';
 
 export function ContactContent() {
   const { t, pick } = useI18n();
-  const { addInquiry } = useDemoStore();
+  const { submitInquiry } = useDemoStore();
 
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -56,19 +56,23 @@ export function ContactContent() {
     }
 
     setSending(true);
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    addInquiry({
-      type: 'general',
-      status: 'new',
-      channel: 'form',
-      fullName: fullName.trim(),
-      phone: phone.trim(),
-      email: email.trim() || undefined,
-      message: `${subject.trim()} — ${message.trim()} (préférence: ${preference})`,
-    });
-    setSending(false);
-    setSent(true);
-    toast.success(t.contact.successTitle, { description: t.contact.successText });
+    try {
+      await submitInquiry({
+        type: 'general',
+        status: 'new',
+        channel: 'form',
+        fullName: fullName.trim(),
+        phone: phone.trim(),
+        email: email.trim() || undefined,
+        message: `${subject.trim()} — ${message.trim()} (préférence: ${preference})`,
+      });
+      setSent(true);
+      toast.success(t.contact.successTitle, { description: t.contact.successText });
+    } catch {
+      toast.error(t.inquiry.submitFailed);
+    } finally {
+      setSending(false);
+    }
   };
 
   const openWhatsApp = () => {
