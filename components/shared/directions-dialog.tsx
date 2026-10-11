@@ -65,7 +65,7 @@ export function DirectionsDialog({
   const [locating, setLocating] = useState(false);
   const [error, setError] = useState<'denied' | 'unavailable' | 'unsupported' | null>(null);
 
-  const useCurrentLocation = async () => {
+  const requestDeviceLocation = async () => {
     setLocating(true);
     setError(null);
     const result = await requestCurrentPosition();
@@ -123,7 +123,7 @@ export function DirectionsDialog({
               type="button"
               variant={userPoint ? 'subtle' : 'outline'}
               size="sm"
-              onClick={useCurrentLocation}
+              onClick={requestDeviceLocation}
               disabled={locating}
               className="w-full"
             >
