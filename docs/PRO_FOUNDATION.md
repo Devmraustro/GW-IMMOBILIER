@@ -31,14 +31,14 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 
 - `NEXT_PUBLIC_CATALOG_MODE`: optional. In development, an empty value uses demo fixtures; in production, an empty value defaults to database mode. Use `demo` only for an explicitly isolated internal prototype/preview, never on a public customer-facing deployment.
 
-A dedicated Neon project named `gw-immobilier-prod` has been provisioned in AWS Europe Central (Frankfurt), using PostgreSQL 17 and the `gwimmobilier` database. The initial migration has been applied successfully. Live validation confirmed all seven project tables and the three reservation integrity constraints. A live-database smoke test verified that overlapping active reservations are rejected, adjacent dates are accepted, cancelled reservations do not block booking, and property and vehicle reservations are isolated. The `DATABASE_URL` variable is configured in Vercel as a sensitive variable for Production and Preview. The administrator login variables `ADMIN_EMAIL` and `ADMIN_PASSWORD` remain unconfigured. A cryptographically random `ADMIN_SESSION_SECRET` is already configured as a sensitive variable for Production and Preview. The Vercel project remains blocked, and no public release has been enabled.
+A dedicated Neon project named `gw-immobilier-prod` has been provisioned in AWS Europe Central (Frankfurt), using PostgreSQL 17 and the `gwimmobilier` database. The initial migration has been applied successfully. Live validation confirmed all seven project tables and the three reservation integrity constraints. A live-database smoke test verified that overlapping active reservations are rejected, adjacent dates are accepted, cancelled reservations do not block booking, and property and vehicle reservations are isolated. The `DATABASE_URL` variable is configured in Vercel as a sensitive variable for Production and Preview. The private variables `ADMIN_EMAIL` and `ADMIN_PASSWORD` have now been configured as sensitive values for Production and Preview, alongside `DATABASE_URL` and a cryptographically random `ADMIN_SESSION_SECRET`. The supplied administrator password is project-identifying and predictable; replace it with a unique random password before allowing public production access. The Vercel project remains blocked, and no public release has been enabled.
 
 ## Database setup
 
 1. **Complete:** a dedicated Neon PostgreSQL project and database have been provisioned for GW Immobilier on PostgreSQL 17 in Frankfurt.
 2. **Complete:** `DATABASE_URL` is set as a sensitive Vercel environment variable for Production and Preview; its value is not stored in the repository.
 3. **Complete:** `db/migrations/0001_initial.sql` has been applied, and live-database schema and reservation-constraint smoke checks passed.
-4. **Required:** set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in Vercel's private environment settings. Use a unique password of at least 16 characters. `ADMIN_SESSION_SECRET` is already configured as a sensitive Vercel variable. Do not send passwords or secrets in chat or commit them.
+4. **Configured, but strengthen before release:** `ADMIN_EMAIL` and `ADMIN_PASSWORD` are set in Vercel as sensitive variables for Production and Preview. The currently supplied password is predictable because it uses the project context and year; replace it with a unique randomly generated password before opening public production access. `ADMIN_SESSION_SECRET` is also configured as a sensitive Vercel variable. Never send passwords or secrets in chat or commit them.
 5. **Required after credentials are configured:** in a protected preview, test login, unauthorized access, listing/vehicle CRUD, public inquiry submission, rate limits, audit entries and reservation conflict handling against the real database.
 
 ## API contract
@@ -60,7 +60,7 @@ All responses are private/no-store. The database uses JSONB payloads shaped like
 
 ## Remaining work before customer production
 
-- Neon and its schema are now provisioned, and `DATABASE_URL` is configured in Vercel as a sensitive variable. The remaining hosting blocker is the missing private administrator login values (`ADMIN_EMAIL` and `ADMIN_PASSWORD`); `ADMIN_SESSION_SECRET` is configured. The latest Vercel deployment remains blocked; no public customer release has been enabled.
+- Neon and its schema are now provisioned, and `DATABASE_URL` is configured in Vercel as a sensitive variable. The administrator variables are now configured as sensitive Vercel values. The current password should be replaced with a unique random password before release. The Vercel project remains blocked and live end-to-end tests have not yet been run through an available deployment. The latest Vercel deployment remains blocked; no public customer release has been enabled.
 - Latest complete CI on the current implementation passed: TypeScript, ESLint, 130 unit tests, production build, PostgreSQL migration applied twice (idempotency), and a real PostgreSQL smoke test for overlap, adjacent dates, cancelled reservations and resource kind.
 - The latest npm audit on that CI commit reported zero vulnerabilities (0 critical, 0 high, 0 moderate). The workflow now fails if `npm audit --audit-level=moderate` detects an unresolved vulnerability.
 - Add private object storage for uploaded property/vehicle media, database backup/restore validation, and production monitoring.
@@ -74,6 +74,6 @@ Do not merge to `main`, deploy to public customer domains or unpause Vercel unti
 
 - TypeScript, ESLint, unit tests and production build pass on the exact final commit.
 - The strict npm audit gate passes on the exact final commit.
-- The private `DATABASE_URL` and `ADMIN_SESSION_SECRET` are configured and the migration is applied. The private `ADMIN_EMAIL` and `ADMIN_PASSWORD` must also be configured before release.
+- The sensitive `DATABASE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and `ADMIN_SESSION_SECRET` variables are configured for Production and Preview, and the migration is applied. Replace the predictable administrator password and pass protected-preview end-to-end tests before release.
 - Real-database smoke tests pass for login, unauthorized requests, catalog publication, CRUD, audit, rate limiting, amount/deposit constraints, and overlapping reservation rejection.
 - Contact details are verified, and no demo data or demo mode is exposed to customers.
