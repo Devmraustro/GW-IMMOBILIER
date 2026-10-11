@@ -33,6 +33,55 @@ CREATE TABLE IF NOT EXISTS gwi_reservations (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Prevent double-booking in the database itself, including concurrent API requests.
+-- btree_gist supplies equality operator classes for text columns in the exclusion constraint.
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+ALTER TABLE gwi_reservations
+  ADD COLUMN IF NOT EXISTS item_id TEXT
+    GENERATED ALWAYS AS (payload->>'itemId') STORED,
+  ADD COLUMN IF NOT EXISTS reservation_kind TEXT
+    GENERATED ALWAYS AS (payload->>'kind') STORED,
+  ADD COLUMN IF NOT EXISTS start_date DATE
+    GENERATED ALWAYS AS ((payload->>'startDate')::date) STORED,
+  ADD COLUMN IF NOT EXISTS end_date DATE
+    GENERATED ALWAYS AS ((payload->>'endDate')::date) STORED,
+  ADD COLUMN IF NOT EXISTS reservation_status TEXT
+    GENERATED ALWAYS AS (payload->>'status') STORED;
+
+DO $
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'gwi_reservations_valid_range'
+      AND conrelid = 'gwi_reservations'::regclass
+  ) THEN
+    ALTER TABLE gwi_reservations
+      ADD CONSTRAINT gwi_reservations_valid_range
+      CHECK (
+        item_id IS NOT NULL AND
+        reservation_kind IN ('property', 'vehicle') AND
+        reservation_status IN ('upcoming', 'ongoing', 'completed', 'cancelled') AND
+        start_date < end_date
+      );
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'gwi_reservations_no_overlap'
+      AND conrelid = 'gwi_reservations'::regclass
+  ) THEN
+    ALTER TABLE gwi_reservations
+      ADD CONSTRAINT gwi_reservations_no_overlap
+      EXCLUDE USING gist (
+        item_id WITH =,
+        reservation_kind WITH =,
+        daterange(start_date, end_date, '[)') WITH &&
+      )
+      WHERE (reservation_status <> 'cancelled');
+  END IF;
+END $;
+
 CREATE TABLE IF NOT EXISTS gwi_admin_login_attempts (
   key_hash TEXT PRIMARY KEY CHECK (length(key_hash) = 64),
   attempts INTEGER NOT NULL DEFAULT 1 CHECK (attempts > 0),
