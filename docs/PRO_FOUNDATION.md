@@ -50,14 +50,14 @@ The API uses strict allowlists for record types and patch fields; it does not in
 
 ## Not yet Pro-complete
 
-The initial dashboard UI still reads and writes records through browser `localStorage`, and public listings are still based on fictional seed data. The new PostgreSQL API is a backend foundation; the next milestone is to migrate the dashboard and public catalog to use it and remove the local demo store from business workflows. The API cannot be verified against a real database until the owner provisions/configures the database connection and runs the migration.
+The administration store now loads records from the authenticated PostgreSQL API and sends admin create/update/delete operations to the server. If the API is unauthenticated it returns to the login page; if storage is unavailable, the UI clears the business collections and presents an unavailable state instead of showing seeded data. Public property/vehicle catalogue pages and customer inquiry forms are still backed by the prototype seed/local state and must be migrated before this becomes a full operational SaaS. The API cannot be verified against a real database until the owner provisions/configures the database connection and runs the migration.
 
 The database currently stores domain-shaped record payloads in PostgreSQL JSONB to preserve the app's existing data models during migration. Further hardening before customer production should include role-backed staff accounts, a distributed login rate limiter, production audit retention/exports, upload storage for real property images, backup/restore testing, and a migration of public inquiry submissions to the server.
 
 ## Release gate
 
 Do not unpause public Vercel domains until:
-- CI typecheck, lint, tests and production build all pass on the latest PR commit.
+- CI typecheck, lint, tests and production build all pass on the latest PR commit after the most recent UI-store integration changes.
 - `npm audit` high/critical findings are reviewed and remediated or explicitly accepted with documented evidence.
 - Database credentials and the migration are configured successfully.
 - Sign-in, CRUD, audit events, conflict handling and unauthorized access are smoke-tested against the real database.
