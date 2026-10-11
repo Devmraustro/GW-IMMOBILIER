@@ -28,8 +28,10 @@ export function SiteHeader() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Close the mobile menu whenever the route changes.
+  // The route is managed by Next.js; close the controlled dialog when browser
+  // navigation changes the pathname. This is intentionally a state sync effect.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMobileOpen(false);
   }, [pathname]);
 
