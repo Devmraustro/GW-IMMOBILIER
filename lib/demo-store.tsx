@@ -10,6 +10,9 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { usePathname } from 'next/navigation';
+import { toast } from 'sonner';
+import { useI18n } from '@/lib/i18n';
 import type { Inquiry, Property, Reservation, Vehicle } from '@/types';
 import { STORAGE_KEYS } from '@/lib/config';
 import { properties as seedProperties } from '@/data/properties';
@@ -18,16 +21,13 @@ import { inquiries as seedInquiries } from '@/data/inquiries';
 import { reservations as seedReservations } from '@/data/reservations';
 
 /**
- * ---------------------------------------------------------------------------
- * DEMO PERSISTENCE LAYER
- * ---------------------------------------------------------------------------
- * There is no backend in the prototype. Everything lives in the browser's
- * localStorage and is merged over the seed data on mount. Swapping this file
- * for real API calls (see README → "Backend integration") is the only change
- * required to make the app production-ready: the rest of the UI consumes this
- * hook exclusively.
- * ---------------------------------------------------------------------------
+ * Store adapter for the existing UI. Public browsing keeps prototype seed
+ * data until catalog migration. The admin dashboard only loads authenticated
+ * server records and never falls back to browser storage.
  */
+export type StorePersistenceMode = 'loading' | 'database' | 'demo' | 'unavailable';
+type AdminRecordType = 'properties' | 'vehicles' | 'inquiries' | 'reservations';
+type MutationResult = { ok: boolean; record?: Record<string, unknown> };
 
 function read<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback;
@@ -51,6 +51,7 @@ function write<T>(key: string, value: T): void {
 
 export type DemoStore = {
   hydrated: boolean;
+  persistenceMode: StorePersistenceMode;
   properties: Property[];
   vehicles: Vehicle[];
   inquiries: Inquiry[];
@@ -86,7 +87,11 @@ export type DemoStore = {
 const DemoStoreContext = createContext<DemoStore | null>(null);
 
 export function DemoStoreProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const adminMode = pathname.startsWith('/admin') && pathname !== '/admin/login';
+  const { t } = useI18n();
   const [hydrated, setHydrated] = useState(false);
+  const [persistenceMode, setPersistenceMode] = useState<StorePersistenceMode>('loading');
   const [properties, setProperties] = useState<Property[]>(seedProperties);
   const [vehicles, setVehicles] = useState<Vehicle[]>(seedVehicles);
   const [inquiries, setInquiries] = useState<Inquiry[]>(seedInquiries);
@@ -94,35 +99,91 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
   const [favorites, setFavorites] = useState<string[]>([]);
   const firstRender = useRef(true);
 
-  // Load persisted demo edits once, after mount (keeps SSR markup stable).
+  // Public pages keep local prototype data. Admin loads only authenticated
+  // server records; a failed database request must never display seed data.
   useEffect(() => {
-    setProperties(read<Property[]>(STORAGE_KEYS.properties, seedProperties));
-    setVehicles(read<Vehicle[]>(STORAGE_KEYS.vehicles, seedVehicles));
-    setInquiries(read<Inquiry[]>(STORAGE_KEYS.inquiries, seedInquiries));
-    setReservations(read<Reservation[]>(STORAGE_KEYS.reservations, seedReservations));
+    let cancelled = false;
+    if (!adminMode) {
+      setProperties(read<Property[]>(STORAGE_KEYS.properties, seedProperties));
+      setVehicles(read<Vehicle[]>(STORAGE_KEYS.vehicles, seedVehicles));
+      setInquiries(read<Inquiry[]>(STORAGE_KEYS.inquiries, seedInquiries));
+      setReservations(read<Reservation[]>(STORAGE_KEYS.reservations, seedReservations));
+      setFavorites(read<string[]>(STORAGE_KEYS.favorites, []));
+      setPersistenceMode('demo');
+      setHydrated(true);
+      return () => { cancelled = true; };
+    }
+
+    setHydrated(false);
+    setPersistenceMode('loading');
+    setProperties([]);
+    setVehicles([]);
+    setInquiries([]);
+    setReservations([]);
     setFavorites(read<string[]>(STORAGE_KEYS.favorites, []));
-    setHydrated(true);
-  }, []);
+
+    async function loadAdminRecords() {
+      try {
+        const types: AdminRecordType[] = ['properties', 'vehicles', 'inquiries', 'reservations'];
+        const responses = await Promise.all(
+          types.map((type) => fetch(`/api/admin/records?type=${type}&limit=250`, {
+            cache: 'no-store',
+            credentials: 'same-origin',
+          })),
+        );
+        if (responses.some((response) => response.status === 401)) {
+          window.location.assign('/admin/login');
+          return;
+        }
+        if (responses.some((response) => !response.ok)) {
+          throw new Error('Unable to load every admin collection');
+        }
+        const bodies = await Promise.all(
+          responses.map((response) => response.json() as Promise<{ records?: unknown }>),
+        );
+        if (bodies.some((body) => !Array.isArray(body.records))) {
+          throw new Error('Invalid admin collection response');
+        }
+        if (cancelled) return;
+        setProperties(bodies[0].records as Property[]);
+        setVehicles(bodies[1].records as Vehicle[]);
+        setInquiries(bodies[2].records as Inquiry[]);
+        setReservations(bodies[3].records as Reservation[]);
+        setPersistenceMode('database');
+        setHydrated(true);
+      } catch {
+        if (cancelled) return;
+        setProperties([]);
+        setVehicles([]);
+        setInquiries([]);
+        setReservations([]);
+        setPersistenceMode('unavailable');
+        setHydrated(true);
+      }
+    }
+    void loadAdminRecords();
+    return () => { cancelled = true; };
+  }, [adminMode]);
 
   useEffect(() => {
-    if (firstRender.current || !hydrated) return;
+    if (firstRender.current || !hydrated || adminMode || persistenceMode !== 'demo') return;
     write(STORAGE_KEYS.properties, properties);
-  }, [properties, hydrated]);
+  }, [properties, hydrated, adminMode, persistenceMode]);
 
   useEffect(() => {
-    if (firstRender.current || !hydrated) return;
+    if (firstRender.current || !hydrated || adminMode || persistenceMode !== 'demo') return;
     write(STORAGE_KEYS.vehicles, vehicles);
-  }, [vehicles, hydrated]);
+  }, [vehicles, hydrated, adminMode, persistenceMode]);
 
   useEffect(() => {
-    if (firstRender.current || !hydrated) return;
+    if (firstRender.current || !hydrated || adminMode || persistenceMode !== 'demo') return;
     write(STORAGE_KEYS.inquiries, inquiries);
-  }, [inquiries, hydrated]);
+  }, [inquiries, hydrated, adminMode, persistenceMode]);
 
   useEffect(() => {
-    if (firstRender.current || !hydrated) return;
+    if (firstRender.current || !hydrated || adminMode || persistenceMode !== 'demo') return;
     write(STORAGE_KEYS.reservations, reservations);
-  }, [reservations, hydrated]);
+  }, [reservations, hydrated, adminMode, persistenceMode]);
 
   useEffect(() => {
     if (firstRender.current || !hydrated) return;
@@ -132,6 +193,49 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (firstRender.current) firstRender.current = false;
   }, []);
+
+  const failAdminPersistence = useCallback(() => {
+    setProperties([]);
+    setVehicles([]);
+    setInquiries([]);
+    setReservations([]);
+    setPersistenceMode('unavailable');
+    setHydrated(true);
+    toast.error(t.admin.databaseSaveFailed);
+  }, [t.admin.databaseSaveFailed]);
+
+  const persistAdminMutation = useCallback(
+    async (
+      method: 'POST' | 'PATCH' | 'DELETE',
+      body: Record<string, unknown>,
+    ): Promise<MutationResult> => {
+      if (!adminMode) return { ok: true };
+      if (persistenceMode !== 'database') {
+        failAdminPersistence();
+        return { ok: false };
+      }
+      try {
+        const response = await fetch('/api/admin/records', {
+          method,
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          credentials: 'same-origin',
+          cache: 'no-store',
+          body: JSON.stringify(body),
+        });
+        if (response.status === 401) {
+          window.location.assign('/admin/login');
+          return { ok: false };
+        }
+        if (!response.ok) throw new Error('Admin record request failed');
+        const result = (await response.json()) as { record?: Record<string, unknown> };
+        return { ok: true, record: result.record };
+      } catch {
+        failAdminPersistence();
+        return { ok: false };
+      }
+    },
+    [adminMode, persistenceMode, failAdminPersistence],
+  );
 
   const addProperty: DemoStore['addProperty'] = useCallback((input) => {
     const created: Property = {
