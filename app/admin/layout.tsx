@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import { DashboardShell } from '@/components/dashboard/dashboard-shell';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
-  title: 'Administration (démonstration)',
-  description:
-    'Tableau de bord de démonstration : biens, véhicules, demandes, réservations et suivi financier. Aucune authentification n’est active.',
+  title: 'Administration | GW Immobilier',
+  description: 'Espace d’administration protégé de GW Immobilier.',
   robots: { index: false, follow: false },
 };
 
