@@ -26,7 +26,7 @@ interface InquiryFormProps {
 
 export function InquiryForm({ property, vehicle, requireDates, className }: InquiryFormProps) {
   const { t, tpl, locale } = useI18n();
-  const { submitInquiry } = useDemoStore();
+  const { submitInquiry, persistenceMode } = useDemoStore();
 
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
@@ -92,7 +92,13 @@ export function InquiryForm({ property, vehicle, requireDates, className }: Inqu
         endDate: endDate || undefined,
       });
       setSubmitted(true);
-      toast.success(t.inquiry.successTitle, { description: t.inquiry.successText });
+      toast.success(
+        persistenceMode === 'demo' ? t.inquiry.demoSuccessTitle : t.inquiry.successTitle,
+        {
+          description:
+            persistenceMode === 'demo' ? t.inquiry.demoSuccessText : t.inquiry.successText,
+        },
+      );
     } catch {
       toast.error(t.inquiry.submitFailed);
     } finally {
