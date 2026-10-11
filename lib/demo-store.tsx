@@ -242,28 +242,42 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
       ...input,
       id: input.id ?? `p-${Date.now().toString(36)}`,
       createdAt: new Date().toISOString(),
+      isDemo: adminMode ? false : input.isDemo,
     };
     setProperties((prev) => [created, ...prev]);
+    if (adminMode) {
+      void persistAdminMutation('POST', { type: 'properties', record: created }).then((result) => {
+        if (result.ok && result.record) setProperties((prev) => prev.map((item) =>
+          item.id === created.id ? (result.record as unknown as Property) : item,
+        ));
+      });
+    }
     return created;
-  }, []);
+  }, [adminMode, persistAdminMutation]);
 
   const updateProperty: DemoStore['updateProperty'] = useCallback((id, patch) => {
     setProperties((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
-  }, []);
+    if (adminMode) {
+      void persistAdminMutation('PATCH', { type: 'properties', id, patch }).then((result) => {
+        if (result.ok && result.record) setProperties((prev) => prev.map((item) =>
+          item.id === id ? (result.record as unknown as Property) : item,
+        ));
+      });
+    }
+  }, [adminMode, persistAdminMutation]);
 
   const deleteProperty: DemoStore['deleteProperty'] = useCallback((id) => {
     setProperties((prev) => prev.filter((p) => p.id !== id));
-  }, []);
+    if (adminMode) void persistAdminMutation('DELETE', { type: 'properties', id });
+  }, [adminMode, persistAdminMutation]);
 
   const togglePropertyAvailability: DemoStore['togglePropertyAvailability'] = useCallback(
     (id, status) => {
-      setProperties((prev) =>
-        prev.map((p) =>
-          p.id === id ? { ...p, availability: { ...p.availability, status } } : p,
-        ),
-      );
+      const property = properties.find((item) => item.id === id);
+      if (!property) return;
+      updateProperty(id, { availability: { ...property.availability, status } });
     },
-    [],
+    [properties, updateProperty],
   );
 
   const addVehicle: DemoStore['addVehicle'] = useCallback((input) => {
@@ -271,24 +285,38 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
       ...input,
       id: input.id ?? `v-${Date.now().toString(36)}`,
       createdAt: new Date().toISOString(),
+      isDemo: adminMode ? false : input.isDemo,
     };
     setVehicles((prev) => [created, ...prev]);
+    if (adminMode) {
+      void persistAdminMutation('POST', { type: 'vehicles', record: created }).then((result) => {
+        if (result.ok && result.record) setVehicles((prev) => prev.map((item) =>
+          item.id === created.id ? (result.record as unknown as Vehicle) : item,
+        ));
+      });
+    }
     return created;
-  }, []);
+  }, [adminMode, persistAdminMutation]);
 
   const updateVehicle: DemoStore['updateVehicle'] = useCallback((id, patch) => {
     setVehicles((prev) => prev.map((v) => (v.id === id ? { ...v, ...patch } : v)));
-  }, []);
+    if (adminMode) {
+      void persistAdminMutation('PATCH', { type: 'vehicles', id, patch }).then((result) => {
+        if (result.ok && result.record) setVehicles((prev) => prev.map((item) =>
+          item.id === id ? (result.record as unknown as Vehicle) : item,
+        ));
+      });
+    }
+  }, [adminMode, persistAdminMutation]);
 
   const deleteVehicle: DemoStore['deleteVehicle'] = useCallback((id) => {
     setVehicles((prev) => prev.filter((v) => v.id !== id));
-  }, []);
+    if (adminMode) void persistAdminMutation('DELETE', { type: 'vehicles', id });
+  }, [adminMode, persistAdminMutation]);
 
   const toggleVehicleAvailability: DemoStore['toggleVehicleAvailability'] = useCallback(
-    (id, available) => {
-      setVehicles((prev) => prev.map((v) => (v.id === id ? { ...v, available } : v)));
-    },
-    [],
+    (id, available) => updateVehicle(id, { available }),
+    [updateVehicle],
   );
 
   const addInquiry: DemoStore['addInquiry'] = useCallback((input) => {
@@ -298,16 +326,31 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
       createdAt: new Date().toISOString(),
     };
     setInquiries((prev) => [created, ...prev]);
+    if (adminMode) {
+      void persistAdminMutation('POST', { type: 'inquiries', record: created }).then((result) => {
+        if (result.ok && result.record) setInquiries((prev) => prev.map((item) =>
+          item.id === created.id ? (result.record as unknown as Inquiry) : item,
+        ));
+      });
+    }
     return created;
-  }, []);
+  }, [adminMode, persistAdminMutation]);
 
   const updateInquiryStatus: DemoStore['updateInquiryStatus'] = useCallback((id, status) => {
     setInquiries((prev) => prev.map((i) => (i.id === id ? { ...i, status } : i)));
-  }, []);
+    if (adminMode) {
+      void persistAdminMutation('PATCH', { type: 'inquiries', id, patch: { status } }).then((result) => {
+        if (result.ok && result.record) setInquiries((prev) => prev.map((item) =>
+          item.id === id ? (result.record as unknown as Inquiry) : item,
+        ));
+      });
+    }
+  }, [adminMode, persistAdminMutation]);
 
   const deleteInquiry: DemoStore['deleteInquiry'] = useCallback((id) => {
     setInquiries((prev) => prev.filter((i) => i.id !== id));
-  }, []);
+    if (adminMode) void persistAdminMutation('DELETE', { type: 'inquiries', id });
+  }, [adminMode, persistAdminMutation]);
 
   const addReservation: DemoStore['addReservation'] = useCallback((input) => {
     const created: Reservation = {
@@ -316,16 +359,31 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
       createdAt: new Date().toISOString(),
     };
     setReservations((prev) => [created, ...prev]);
+    if (adminMode) {
+      void persistAdminMutation('POST', { type: 'reservations', record: created }).then((result) => {
+        if (result.ok && result.record) setReservations((prev) => prev.map((item) =>
+          item.id === created.id ? (result.record as unknown as Reservation) : item,
+        ));
+      });
+    }
     return created;
-  }, []);
+  }, [adminMode, persistAdminMutation]);
 
   const updateReservation: DemoStore['updateReservation'] = useCallback((id, patch) => {
     setReservations((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
-  }, []);
+    if (adminMode) {
+      void persistAdminMutation('PATCH', { type: 'reservations', id, patch }).then((result) => {
+        if (result.ok && result.record) setReservations((prev) => prev.map((item) =>
+          item.id === id ? (result.record as unknown as Reservation) : item,
+        ));
+      });
+    }
+  }, [adminMode, persistAdminMutation]);
 
   const deleteReservation: DemoStore['deleteReservation'] = useCallback((id) => {
     setReservations((prev) => prev.filter((r) => r.id !== id));
-  }, []);
+    if (adminMode) void persistAdminMutation('DELETE', { type: 'reservations', id });
+  }, [adminMode, persistAdminMutation]);
 
   const toggleFavorite = useCallback((id: string) => {
     let added = false;
@@ -343,6 +401,7 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
   const isFavorite = useCallback((id: string) => favorites.includes(id), [favorites]);
 
   const resetDemoData = useCallback(() => {
+    if (adminMode) return;
     setProperties(seedProperties);
     setVehicles(seedVehicles);
     setInquiries(seedInquiries);
@@ -355,7 +414,7 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [adminMode]);
 
   const getProperty = useCallback(
     (idOrSlug: string) =>
@@ -371,6 +430,7 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
   const value = useMemo<DemoStore>(
     () => ({
       hydrated,
+      persistenceMode,
       properties,
       vehicles,
       inquiries,
@@ -398,6 +458,7 @@ export function DemoStoreProvider({ children }: { children: ReactNode }) {
     }),
     [
       hydrated,
+      persistenceMode,
       properties,
       vehicles,
       inquiries,
