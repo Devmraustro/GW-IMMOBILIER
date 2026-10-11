@@ -436,6 +436,16 @@ export const fr = {
   },
   admin: {
     dashboard: 'Tableau de bord',
+    authTitle: 'Accès administrateur',
+    authDescription: 'Connectez-vous pour gérer les annonces, demandes et réservations de l’agence.',
+    authEmail: 'Adresse e-mail',
+    authPassword: 'Mot de passe',
+    authSubmit: 'Se connecter',
+    authSubmitting: 'Connexion en cours…',
+    authInvalid: 'Adresse e-mail ou mot de passe incorrect.',
+    authUnavailable: 'La connexion administrateur n’est pas configurée. Définissez ADMIN_EMAIL, ADMIN_PASSWORD et ADMIN_SESSION_SECRET dans les variables privées du serveur.',
+    authError: 'La connexion a échoué. Réessayez.',
+    logout: 'Déconnexion',
     demoBanner:
       'Mode démonstration : les données sont enregistrées localement dans votre navigateur. Aucune authentification ni base de données n’est active.',
     demoBadge: 'Démo',
@@ -558,7 +568,7 @@ export const fr = {
     resetDone: 'Données de démonstration restaurées',
     futureAuthTitle: 'Vers une version de production',
     futureAuthText:
-      'Cette interface n’est pas protégée. Avant la mise en production : ajouter une authentification (NextAuth / Clerk), une base de données (PostgreSQL + Prisma), un stockage d’images (S3 / Cloudinary) et une autorisation vérifiée côté serveur pour chaque mutation.',
+      'Les données de démonstration sont encore stockées dans ce navigateur. La connexion administrateur est activée, mais la base de données partagée et le stockage serveur restent à configurer avant une exploitation réelle.',
     unsavedChanges: 'Modifications non enregistrées',
     requiredField: 'Ce champ est obligatoire',
     invalidNumber: 'Saisissez un nombre valide',
