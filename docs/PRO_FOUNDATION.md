@@ -5,15 +5,16 @@
 - Server-side admin login using private environment credentials.
 - Signed HMAC-SHA-256 sessions with an eight-hour expiry.
 - HttpOnly, SameSite=Strict session cookie; Secure in production.
-- Protection for every `/admin/*` route and every `/api/admin/*` route, except the intentionally public login/logout endpoints.
-- Fail-closed behaviour when credentials or the session secret are not configured.
-- Logout action in desktop and mobile dashboard navigation.
-- French and Arabic sign-in copy.
-- Unit tests for signature, expiry, account binding and missing secrets.
+- Middleware protection for every `/admin/*` route and every `/api/admin/*` route, except the intentionally public login/logout endpoints.
+- Logout action on desktop and mobile dashboard navigation.
+- FR/AR sign-in labels and admin error messages.
+- A PostgreSQL schema for properties, vehicles, inquiries, reservations and admin audit events.
+- An authenticated CRUD API at `/api/admin/records` with allowlisted collection names, input validation, bounded JSON request bodies and an audit entry for each create/update/delete.
+- Unit tests for session tokens and record validation.
 
 ## Required private environment variables
 
-Configure these under Vercel → Project → Settings → Environment Variables. Do not prefix them with `NEXT_PUBLIC_`.
+Configure these under Vercel → Project → Settings → Environment Variables. Never prefix credentials with `NEXT_PUBLIC_`.
 
 - `ADMIN_EMAIL`: administrator e-mail address.
 - `ADMIN_PASSWORD`: a unique password with at least 16 characters.
@@ -23,19 +24,41 @@ Configure these under Vercel → Project → Settings → Environment Variables.
 node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 ```
 
-The example environment file intentionally leaves these values blank. If settings are absent, login returns an unavailable response and admin pages stay protected.
+- `DATABASE_URL`: a PostgreSQL connection string. For serverless use, prefer the provider's pooled connection string. The project currently uses Neon's serverless SQL driver, which is intended for the hosted Neon PostgreSQL service.
+
+All sensitive settings remain server-only. If credentials or the database are absent, sign-in fails closed or the API returns a configuration error; there are no development credentials embedded in source code.
+
+## Set up PostgreSQL
+
+1. Provision a PostgreSQL database through the Vercel Marketplace/Neon integration for this project, after confirming the plan and any billing implications.
+2. Add the connection string as the private `DATABASE_URL` variable for the intended Vercel environment. Do not commit the URL to Git.
+3. Apply `db/migrations/0001_initial.sql` to that database using the provider's SQL editor or a secure local PostgreSQL client.
+4. Add `ADMIN_EMAIL`, `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` to the same environment.
+5. Run CI and test the protected sign-in and API in a protected preview. Do not unpause the public project until all of these steps and the dependency-security review are complete.
+
+## API contract
+
+All record routes require an authenticated admin session. Mutation requests must be same-origin JSON requests.
+
+- `GET /api/admin/records?type=properties|vehicles|inquiries|reservations&limit=100`
+- `POST /api/admin/records` with `{ "type": "...", "record": { ... } }`
+- `PATCH /api/admin/records` with `{ "type": "...", "id": "...", "patch": { ... } }`
+- `DELETE /api/admin/records` with `{ "type": "...", "id": "..." }`
+- `GET /api/admin/records?type=audit&limit=100` reads audit events.
+
+The API uses strict allowlists for record types and patch fields; it does not interpolate user-provided table names. SQL mutations and audit entries are written within one PostgreSQL statement using CTEs. Listing slugs are uniquely indexed, and the API returns `503 DATABASE_NOT_CONFIGURED` until `DATABASE_URL` and the initial schema exist.
 
 ## Not yet Pro-complete
 
-This is the first security milestone, not the finished SaaS backend. The existing dashboard still reads and writes records in browser `localStorage`, and the catalog is still based on seed data. There is not yet shared PostgreSQL persistence, database-backed user accounts/roles, server-side CRUD for properties/vehicles/inquiries/reservations, private image storage, durable audit logs, or cross-device data.
+The initial dashboard UI still reads and writes records through browser `localStorage`, and public listings are still based on fictional seed data. The new PostgreSQL API is a backend foundation; the next milestone is to migrate the dashboard and public catalog to use it and remove the local demo store from business workflows. The API cannot be verified against a real database until the owner provisions/configures the database connection and runs the migration.
 
-Do not unpause the public project for customer operations until the database/API migration is implemented, database and storage credentials are configured, and production tests pass. Existing data models and UI remain the starting point. No source code from the searched RentPro repository was copied because no permissive license file was found at the inspected path.
+The database currently stores domain-shaped record payloads in PostgreSQL JSONB to preserve the app's existing data models during migration. Further hardening before customer production should include role-backed staff accounts, a distributed login rate limiter, production audit retention/exports, upload storage for real property images, backup/restore testing, and a migration of public inquiry submissions to the server.
 
-## Recommended next milestone
+## Release gate
 
-1. Provision an approved PostgreSQL service and configure its private connection URL.
-2. Add schema/migrations for properties, vehicles, inquiries, reservations, admin users/roles and audit events.
-3. Implement authenticated route handlers with server-side validation and role checks.
-4. Migrate business records away from `localStorage`, keeping favourites client-local.
-5. Add private object storage for media, backups, distributed login rate limiting and integration tests.
-6. Deploy to a protected preview, verify critical flows, and only then restore public access.
+Do not unpause public Vercel domains until:
+- CI typecheck, lint, tests and production build all pass on the latest PR commit.
+- `npm audit` high/critical findings are reviewed and remediated or explicitly accepted with documented evidence.
+- Database credentials and the migration are configured successfully.
+- Sign-in, CRUD, audit events, conflict handling and unauthorized access are smoke-tested against the real database.
+- The user interface no longer reports successful local-only saves as business-data persistence.
