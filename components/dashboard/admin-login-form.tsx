@@ -30,7 +30,9 @@ export function AdminLoginForm() {
             ? t.admin.authUnavailable
             : response.status === 401
               ? t.admin.authInvalid
-              : t.admin.authError,
+              : response.status === 429
+                ? t.admin.authRateLimited
+                : t.admin.authError,
         );
         return;
       }
