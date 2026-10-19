@@ -10,7 +10,7 @@ import type { Translated } from '@/types';
  */
 export const company = {
   legalName: 'AUS Immobilier',
-  shortName: 'GW',
+  shortName: 'AUS',
   established: 2024,
   tagline: {
     fr: 'Immobilier & location de véhicules — Alger',
