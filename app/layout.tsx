@@ -7,13 +7,13 @@ import { ConditionalSiteHeader, ConditionalSiteFooter } from '@/components/layou
 import { company } from '@/data/company';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://gw-immobilier-platform.vercel.app'),
+  metadataBase: new URL('https://aus-immobilier-demo.vercel.app'),
   title: {
-    default: 'GW Immobilier — Location, vente et véhicules à Alger',
-    template: '%s | GW Immobilier',
+    default: 'AUS Immobilier — Location, vente et véhicules à Alger',
+    template: '%s | AUS Immobilier',
   },
   description:
-    'GW Immobilier : location, vente et gestion immobilière, meublés de courte durée et location de véhicules dans la wilaya d’Alger. Carte interactive, filtres et demandes WhatsApp.',
+    'AUS Immobilier : location, vente et gestion immobilière, meublés de courte durée et location de véhicules dans la wilaya d’Alger. Carte interactive, filtres et demandes WhatsApp.',
   keywords: [
     'immobilier Alger',
     'location appartement Alger',
@@ -30,13 +30,13 @@ export const metadata: Metadata = {
     'Ouled Fayet',
     'Dar El Beida',
   ],
-  authors: [{ name: 'GW Immobilier' }],
+  authors: [{ name: 'AUS Immobilier' }],
   openGraph: {
-    title: 'GW Immobilier — Location, vente et véhicules à Alger',
+    title: 'AUS Immobilier — Location, vente et véhicules à Alger',
     description: company.positioning.fr,
     type: 'website',
     locale: 'fr_DZ',
-    siteName: 'GW Immobilier',
+    siteName: 'AUS Immobilier',
   },
   robots: { index: true, follow: true },
   icons: {
