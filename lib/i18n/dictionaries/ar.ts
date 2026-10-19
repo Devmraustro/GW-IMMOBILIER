@@ -3,14 +3,14 @@ import type { Dictionary } from './fr';
 /** Arabic dictionary — must implement every key of the French dictionary. */
 export const ar: Dictionary = {
   meta: {
-    siteName: 'جي دبليو العقارية',
+    siteName: 'AUS Immobilier',
     defaultDescription:
-      'جي دبليو العقارية — الكراء والبيع والتسيير العقاري، والشقق المفروشة للإقامة القصيرة وكراء السيارات في ولاية الجزائر.',
+      'AUS Immobilier — الكراء والبيع والتسيير العقاري، والشقق المفروشة للإقامة القصيرة وكراء السيارات في ولاية الجزائر.',
   },
   common: {
     skipToContent: 'الانتقال إلى المحتوى الرئيسي',
-    brand: 'جي دبليو العقارية',
-    brandShort: 'جي دبليو',
+    brand: 'AUS Immobilier',
+    brandShort: 'AUS',
     learnMore: 'اعرف المزيد',
     seeAll: 'عرض الكل',
     back: 'رجوع',
@@ -132,7 +132,7 @@ export const ar: Dictionary = {
     featuredCarsText: 'من السيارة الاقتصادية إلى الفاخرة، مع سائق أو بدونه.',
     servicesTitle: 'خدماتنا',
     servicesText: 'مُخاطب واحد لكل مرحلة من مشروعك العقاري أو تنقلاتك.',
-    whyTitle: 'لماذا جي دبليو العقارية',
+    whyTitle: 'لماذا AUS Immobilier',
     whyText: 'طريقة عمل بسيطة وموثقة وقابلة للتحقق.',
     areasTitle: 'مناطق تدخلنا',
     areasText: 'تسع بلديات مغطاة حول الجزائر وعلى الساحل.',
@@ -336,7 +336,7 @@ export const ar: Dictionary = {
     processTitle: 'طريقة عمل من أربع مراحل',
   },
   about: {
-    title: 'حول جي دبليو العقارية',
+    title: 'حول AUS Immobilier',
     subtitle: 'وكالة قريبة منك، بأدوات منصة رقمية.',
     storyTitle: 'قصتنا',
     missionTitle: 'مهمتنا',
