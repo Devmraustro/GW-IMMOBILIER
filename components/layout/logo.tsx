@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils';
 
 /**
- * GW monogram. Inline SVG so it is crisp at any size, needs no network request
+ * AUS monogram. Inline SVG so it is crisp at any size, needs no network request
  * and inherits the current text colour where useful.
  */
 export function Logo({
@@ -38,7 +38,7 @@ export function Logo({
       {showWordmark ? (
         <span className="flex flex-col leading-none">
           <span className={cn('font-display text-[15px] font-semibold tracking-tight', wordClass)}>
-            GW Immobilier
+            AUS Immobilier
           </span>
           <span
             className={cn(
@@ -46,7 +46,7 @@ export function Logo({
               variant === 'light' ? 'text-white/60' : 'text-ink-400',
             )}
           >
-            Alger · Immobilier & Auto
+            Algérie · Immobilier
           </span>
         </span>
       ) : null}
