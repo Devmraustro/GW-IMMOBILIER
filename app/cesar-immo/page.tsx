@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, ArrowUpLeft, Building2, CheckCircle2, ChevronLeft, Clock3, House, MapPin, MessageCircle, Phone, Ruler, ShieldCheck, Trees, Waves } from "lucide-react";
+import { ArrowLeft, Building2, CheckCircle2, ChevronLeft, House, MapPin, MessageCircle, Phone, Ruler, ShieldCheck, Trees } from "lucide-react";
 
 const listings = [
   {
@@ -61,7 +61,7 @@ export default function CesarImmoDemoPage() {
       <section className="relative isolate">
         <div className="absolute inset-0 -z-20 bg-[#111b2e]" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-l from-[#111b2e]/95 via-[#111b2e]/75 to-[#111b2e]/25" />
-        <div className="absolute inset-0 -z-10 opacity-35" style={{ backgroundImage: "url(https://images.unsplash.com/photo-160059 More?auto=format&fit=crop&w=2000&q=85)".replace("160059 More", "1600596542815-ffad4c1539a9"), backgroundSize: "cover", backgroundPosition: "center" }} />
+        <div className="absolute inset-0 -z-10 opacity-35" style={{ backgroundImage: "url(https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2000&q=85)", backgroundSize: "cover", backgroundPosition: "center" }} />
         <div className="mx-auto grid min-h-[570px] max-w-7xl items-center gap-10 px-4 py-16 sm:px-6 md:grid-cols-[1.1fr_.9fr] lg:px-8 lg:py-24">
           <div className="max-w-2xl text-white">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#e7b94e]/40 bg-white/10 px-4 py-2 text-sm font-bold text-[#f1cb6b] backdrop-blur"><ShieldCheck size={17} /> ثقة، وضوح، ومرافقة حتى إتمام المعاملة</div>
