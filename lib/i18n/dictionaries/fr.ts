@@ -4,14 +4,14 @@
  */
 export const fr = {
   meta: {
-    siteName: 'GW Immobilier',
+    siteName: 'AUS Immobilier',
     defaultDescription:
-      'GW Immobilier — location, vente et gestion immobilière, meublés de courte durée et location de véhicules dans la wilaya d’Alger.',
+      'AUS Immobilier — location, vente et gestion immobilière, meublés de courte durée et location de véhicules dans la wilaya d’Alger.',
   },
   common: {
     skipToContent: 'Aller au contenu principal',
-    brand: 'GW Immobilier',
-    brandShort: 'GW',
+    brand: 'AUS Immobilier',
+    brandShort: 'AUS',
     learnMore: 'En savoir plus',
     seeAll: 'Voir tout',
     back: 'Retour',
@@ -134,7 +134,7 @@ export const fr = {
     featuredCarsText: 'De la citadine économique au véhicule de prestige, avec ou sans chauffeur.',
     servicesTitle: 'Nos services',
     servicesText: 'Un interlocuteur unique pour chaque étape de votre projet immobilier ou de votre mobilité.',
-    whyTitle: 'Pourquoi GW Immobilier',
+    whyTitle: 'Pourquoi AUS Immobilier',
     whyText: 'Une méthode de travail simple, documentée et vérifiable.',
     areasTitle: 'Nos secteurs d’intervention',
     areasText: 'Neuf communes couvertes autour d’Alger et sur le littoral.',
@@ -341,7 +341,7 @@ export const fr = {
     processTitle: 'Une méthode en quatre étapes',
   },
   about: {
-    title: 'À propos de GW Immobilier',
+    title: 'À propos de AUS Immobilier',
     subtitle: 'Une agence de proximité, outillée comme une plateforme.',
     storyTitle: 'Notre histoire',
     missionTitle: 'Notre mission',
