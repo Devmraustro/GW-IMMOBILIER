@@ -9,7 +9,7 @@ import type { Translated } from '@/types';
  * before going live. Placeholder values are clearly flagged in the UI.
  */
 export const company = {
-  legalName: 'GW Immobilier',
+  legalName: 'AUS Immobilier',
   shortName: 'GW',
   established: 2024,
   tagline: {
@@ -21,8 +21,8 @@ export const company = {
     ar: 'الكراء والبيع والتسيير العقاري، والشقق المفروشة للإقامة القصيرة وكراء السيارات في ولاية الجزائر.',
   },
   story: {
-    fr: 'GW Immobilier accompagne propriétaires et locataires sur l’ensemble de la wilaya d’Alger : location annuelle et meublée, vente, échange et location de véhicules. Notre méthode est simple : des biens vérifiés, des visites organisées, des contrats clairs et un interlocuteur unique du premier contact à la remise des clés.',
-    ar: 'ترافق شركة جي دبليو العقارية الملاك والمستأجرين في كامل ولاية الجزائر: الكراء السنوي والمفروش، البيع، التبادل وكراء السيارات. طريقتنا بسيطة: عقارات معاينة، زيارات منظمة، عقود واضحة ومُخاطب واحد من أول اتصال إلى تسليم المفاتيح.',
+    fr: 'AUS Immobilier accompagne propriétaires et locataires sur l’ensemble de la wilaya d’Alger : location annuelle et meublée, vente, échange et location de véhicules. Notre méthode est simple : des biens vérifiés, des visites organisées, des contrats clairs et un interlocuteur unique du premier contact à la remise des clés.',
+    ar: 'ترافق شركة AUS Immobilier الملاك والمستأجرين في كامل ولاية الجزائر: الكراء السنوي والمفروش، البيع، التبادل وكراء السيارات. طريقتنا بسيطة: عقارات معاينة، زيارات منظمة، عقود واضحة ومُخاطب واحد من أول اتصال إلى تسليم المفاتيح.',
   },
   mission: {
     fr: 'Rendre la location et l’achat immobilier plus lisibles : des informations complètes, des prix annoncés, une disponibilité honnête et une réponse rapide — par téléphone ou WhatsApp.',
