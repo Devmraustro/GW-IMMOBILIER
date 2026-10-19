@@ -33,7 +33,7 @@ export function Logo({
         )}
         aria-hidden
       >
-        GW
+        AUS
       </span>
       {showWordmark ? (
         <span className="flex flex-col leading-none">
