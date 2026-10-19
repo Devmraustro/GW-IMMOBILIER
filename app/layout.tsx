@@ -3,8 +3,7 @@ import './globals.css';
 import { Toaster } from 'sonner';
 import { I18nProvider } from '@/lib/i18n';
 import { DemoStoreProvider } from '@/lib/demo-store';
-import { SiteHeader } from '@/components/layout/site-header';
-import { SiteFooter } from '@/components/layout/site-footer';
+import { ConditionalSiteHeader, ConditionalSiteFooter } from '@/components/layout/conditional-site-chrome';
 import { company } from '@/data/company';
 
 export const metadata: Metadata = {
@@ -72,11 +71,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             >
               Aller au contenu principal · الانتقال إلى المحتوى الرئيسي
             </a>
-            <SiteHeader />
+            <ConditionalSiteHeader />
             <main id="main" className="min-h-[60vh]">
               {children}
             </main>
-            <SiteFooter />
+            <ConditionalSiteFooter />
             <Toaster
               position="top-center"
               richColors
